@@ -15,15 +15,16 @@
 #define	GRAV_CONST 0.009;
 using namespace std;
 
+enum camera_type {ADVENTURE=1, FOLLOW=2, TOWER=3, TOP=4, HELI=5};
+
 class Camera
 {
 public:
   float x, y, z;
   float zoom, pan;
+  int camera_type;
   Camera () {
-	x = 0;
-	y = 3;
-	z = 3;
+	camera_type = TOWER;
 	zoom = 4.0;
 	pan = 0.0;
   }
@@ -47,9 +48,9 @@ public:
 Wall* getFloorSquare(float x, float z)
 {
   z*=-1;
-  if (x<0 || x>40)
+  if (x<-1.5 || x>39.5)
 	return NULL;
-  if (z<0 || z>40)
+  if (z<-1.5 || z>39.5)
 	return NULL;
   else
 	return &Floor[(int)(x+1)/2][(int)(z+1)/2];
@@ -60,13 +61,19 @@ void gravity() {
   Wall* Block = getFloorSquare(Cube.x, Cube.z);
   if(Block == NULL)
   	Cube.y-=10;
-  else
-  	Block->y -= 0.005;
-  if(Cube.y-Cube.size_y/2 <= Block->y+Block->size_y/2)
+  else if(Cube.y-Cube.size_y/2 <= Block->y+Block->size_y/2) {
   	Cube.vel[1] = 0;
+	Block->y -= 0.05;
+  }
   Cube.x += Cube.vel[0];
   Cube.y += Cube.vel[1];
   Cube.z += Cube.vel[2];
+}
+
+void moveCube(float x, float z)
+{
+  Wall* CurrCube = getFloorSquare(Cube.x, Cube.z);
+
 }
 
 /* Executed when a regular key is pressed/released/held-down */
@@ -81,6 +88,9 @@ void keyboard (GLFWwindow* window, int key, int scancode, int action, int mods)
 	switch (key) {
 	case GLFW_KEY_ESCAPE:
 	  quit(window);
+	  break;
+	case GLFW_KEY_SPACE:
+	  Cube.vel += glm::vec3 (0, 0.1, 0);
 	  break;
 	}
   }
@@ -139,6 +149,13 @@ void keyboardChar (GLFWwindow* window, unsigned int key)
   case 'd':
 	Cube.x += 0.1;
 	Eye.x += 0.1;
+	break;
+
+  case '1':
+	Eye.camera_type = TOWER;
+	break;
+  case '2':
+	Eye.camera_type = TOP;
 	break;
   }
 }
@@ -358,7 +375,10 @@ void createFloor ()
 	  Floor[i][j].size_x = 2;
 	  Floor[i][j].size_y = 2;
 	  Floor[i][j].x = 2*i;
-	  Floor[i][j].y = -3;
+	  if((i+j)%2)
+		Floor[i][j].y = 7;
+	  else
+		Floor[i][j].y = -3;
 	  Floor[i][j].z = -2*j;
 	  Floor[i][j].sprite = create3DObject(GL_TRIANGLES, 45, g_vertex_buffer_data, g_color_buffer_data, GL_FILL);
 	}
@@ -532,6 +552,22 @@ void cursor_position_callback(GLFWwindow* window, double xpos, double ypos)
 {
 }
 
+void set_cam()
+{
+  switch(Eye.camera_type) {
+  case TOWER:
+	Eye.x = Cube.x;
+	Eye.y = Cube.y+3;
+	Eye.z = Cube.z+3;
+	break;
+  case TOP:
+	Eye.x = Cube.x;
+	Eye.y = Cube.y+3;
+	Eye.z = Cube.z+0.1;
+	break;
+  }
+}
+
 int main (int argc, char** argv)
 {
   int width = 1400;
@@ -548,6 +584,7 @@ int main (int argc, char** argv)
 
 	// OpenGL Draw commands
 	gravity();
+	set_cam();
 	draw();
 
 	// Swap Frame Buffer in double buffering
