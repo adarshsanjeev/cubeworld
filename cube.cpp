@@ -24,6 +24,7 @@ public:
   float zoom, pan;
   int camera_type;
   Camera () {
+	x=0,y=3,z=3;
 	camera_type = TOWER;
 	zoom = 4.0;
 	pan = 0.0;
@@ -59,11 +60,10 @@ Wall* getFloorSquare(float x, float z)
 void gravity() {
   Cube.vel += glm::vec3(0.0f, -0.0009f, 0.0f);
   Wall* Block = getFloorSquare(Cube.x, Cube.z);
-  if(Block == NULL)
-  	Cube.y-=10;
-  else if(Cube.y-Cube.size_y/2 <= Block->y+Block->size_y/2) {
-  	Cube.vel[1] = 0;
-	Block->y -= 0.05;
+  if(Block != NULL)
+	if(Cube.y-Cube.size_y/2 <= Block->y+Block->size_y/2) {
+	  Cube.vel[1] = 0;
+	  Block->y -= 0.05;
   }
   Cube.x += Cube.vel[0];
   Cube.y += Cube.vel[1];
@@ -332,6 +332,7 @@ void createFloor ()
 	-1.0f, 1.0f, 1.0f,
 	1.0f,-1.0f, 1.0f
   };
+
   static const GLfloat g_color_buffer_data[] = {
 	0.0f, 0.0f, 0.0f, // triangle 1 : begin
 	0.0f, 0.0f, 0.0f,
@@ -339,47 +340,50 @@ void createFloor ()
 	1.0f, 1.0f, 1.0f, // triangle 2 : begin
 	1.0f, 1.0f, 1.0f,
 	1.0f, 1.0f, 1.0f, // triangle 2 : end
-	1.0f, 1.0f, 1.0f,
-	1.0f, 1.0f, 1.0f,
-	1.0f, 1.0f, 1.0f,
-	1.0f, 1.0f, 1.0f,
-	1.0f,1.0f,1.0f,
-	1.0f,1.0f,1.0f,
-	1.0f,1.0f,1.0f,
-	1.0f, 1.0f, 1.0f,
-	1.0f, 1.0f,1.0f,
-	1.0f,1.0f, 1.0f,
-	1.0f,1.0f, 1.0f,
-	1.0f,1.0f,1.0f,
+	1.0f, 0.0f, 1.0f,
 	1.0f, 0.0f, 0.0f,
-	1.0f,1.0f, 1.0f,
-	1.0f,0.0f, 1.0f,
+	1.0f, 1.0f, 0.0f,
 	1.0f, 1.0f, 1.0f,
-	1.0f,1.0f,1.0f,
+	1.0f, 1.0f, 1.0f,
+	1.0f, 1.0f, 1.0f,
+	1.0f, 1.0f, 1.0f,
+	0.7f, 0.4f, 0.2f,
+	1.0f, 1.0f, 1.0f,
+	1.0f, 0.0f, 1.0f,
+	0.0f, 1.0f, 1.0f,
+	1.0f, 1.0f, 0.0f,
 	1.0f, 0.0f, 0.0f,
-	1.0f,1.0f,1.0f,
 	1.0f, 1.0f, 1.0f,
-	1.0f,1.0f, 1.0f,
-	1.0f, 1.0f,1.0f,
-	1.0f, 1.0f,0.0f,
-	1.0f, 1.0f,1.0f,
-	1.0f,1.0f, 1.0f,
-	1.0f, 1.0f,1.0f,
+	1.0f, 0.0f, 1.0f,
+	1.0f, 1.0f, 1.0f,
+	1.0f, 1.0f, 1.0f,
+	0.0f, 0.0f, 0.0f,
+	1.0f, 1.0f, 1.0f,
+	0.0f, 1.0f, 0.0f,
+	1.0f, 1.0f, 1.0f,
+	1.0f, 1.0f, 1.0f,
+	1.0f, 0.4f, 0.0f,
+	1.0f, 1.0f, 1.0f,
+	1.0f, 1.0f, 1.0f,
+	1.0f, 0.0f, 1.0f,
 	1.0f, 0.0f, 1.0f,
 	1.0f, 0.0f, 0.0f,
 	1.0f, 1.0f, 1.0f,
-	1.0f,1.0f, 1.0f
+	1.0f, 1.0f, 1.0f
   };
   for(int i=0; i<FLOOR_LENGTH; i++)
 	for(int j=0; j<FLOOR_LENGTH; j++) {
 	  Floor[i][j].size_x = 2;
 	  Floor[i][j].size_y = 2;
-	  Floor[i][j].x = 2*i;
-	  if((i+j)%2)
-		Floor[i][j].y = 7;
-	  else
-		Floor[i][j].y = -3;
-	  Floor[i][j].z = -2*j;
+	  if((i+j)%2) {
+		Floor[i][j].x = 200*i;
+		Floor[i][j].z = -200*j;
+	  }
+	  else {
+		Floor[i][j].x = 2*i;
+		Floor[i][j].z = -2*j;
+	  }
+	  Floor[i][j].y = -3;
 	  Floor[i][j].sprite = create3DObject(GL_TRIANGLES, 45, g_vertex_buffer_data, g_color_buffer_data, GL_FILL);
 	}
 }
@@ -554,18 +558,18 @@ void cursor_position_callback(GLFWwindow* window, double xpos, double ypos)
 
 void set_cam()
 {
-  switch(Eye.camera_type) {
-  case TOWER:
-	Eye.x = Cube.x;
-	Eye.y = Cube.y+3;
-	Eye.z = Cube.z+3;
-	break;
-  case TOP:
-	Eye.x = Cube.x;
-	Eye.y = Cube.y+3;
-	Eye.z = Cube.z+0.1;
-	break;
-  }
+  // switch(Eye.camera_type) {
+  // case TOWER:
+  // 	Eye.x = Cube.x;
+  // 	Eye.y = Cube.y+3;
+  // 	Eye.z = Cube.z+3;
+  // 	break;
+  // case TOP:
+  // 	Eye.x = Cube.x;
+  // 	Eye.y = Cube.y+3;
+  // 	Eye.z = Cube.z+0.1;
+  // 	break;
+  // }
 }
 
 int main (int argc, char** argv)
