@@ -10,47 +10,36 @@
 #include <glm/glm.hpp>
 #include <glm/gtx/transform.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include "cube.h"
 
 using namespace std;
 
-struct VAO {
-	GLuint VertexArrayID;
-	GLuint VertexBuffer;
-	GLuint ColorBuffer;
+class Camera
+{
+public:
+  float eye_x, eye_y;
+  float zoom, pan;
+  Camera () {
+	eye_x = 0;
+	eye_y = 0;
+	zoom = 4.0;
+	pan = 0.0;
+  }
+}Eye;
 
-	GLenum PrimitiveMode;
-	GLenum FillMode;
-	int NumVertices;
-};
-
-typedef struct VAO VAO;
-
-struct GLMatrices {
-	glm::mat4 projection;
-	glm::mat4 model;
-	glm::mat4 view;
-	GLuint MatrixID;
-} Matrices;
-
-GLuint programID;
-
-int eye_x, eye_y;
-
-class Character {
-	public:
-		float x, y;
-		float radius;
-		glm::vec2 Vel;
-		float health;
-		float fric_const;
-		float elast_const;
-		float rest_const;
-		float air_const;
-		bool alive;
-		VAO *sprite;
-};
-
-int bird_count = 0;
+// class Character {
+// 	public:
+// 		float x, y;
+// 		float radius;
+// 		glm::vec2 Vel;
+// 		float health;
+// 		float fric_const;
+// 		float elast_const;
+// 		float rest_const;
+// 		float air_const;
+// 		bool alive;
+// 		VAO *sprite;
+// };
 
 class Wall {
 public:
@@ -59,180 +48,8 @@ public:
 	VAO *sprite;
 } Floor;
 
-float clamp(float value, float min, float max) {
-	return std::max(min, std::min(max, value));
+void gravity() {
 }
-
-/* Function to load Shaders - Use it as it is */
-GLuint LoadShaders(const char * vertex_file_path,const char * fragment_file_path) {
-
-	// Create the shaders
-	GLuint VertexShaderID = glCreateShader(GL_VERTEX_SHADER);
-	GLuint FragmentShaderID = glCreateShader(GL_FRAGMENT_SHADER);
-
-	// Read the Vertex Shader code from the file
-	std::string VertexShaderCode;
-	std::ifstream VertexShaderStream(vertex_file_path, std::ios::in);
-	if(VertexShaderStream.is_open())
-	{
-		std::string Line = "";
-		while(getline(VertexShaderStream, Line))
-			VertexShaderCode += "\n" + Line;
-		VertexShaderStream.close();
-	}
-
-	// Read the Fragment Shader code from the file
-	std::string FragmentShaderCode;
-	std::ifstream FragmentShaderStream(fragment_file_path, std::ios::in);
-	if(FragmentShaderStream.is_open()){
-		std::string Line = "";
-		while(getline(FragmentShaderStream, Line))
-			FragmentShaderCode += "\n" + Line;
-		FragmentShaderStream.close();
-	}
-
-	GLint Result = GL_FALSE;
-	int InfoLogLength;
-
-	// Compile Vertex Shader
-	printf("Compiling shader : %s\n", vertex_file_path);
-	char const * VertexSourcePointer = VertexShaderCode.c_str();
-	glShaderSource(VertexShaderID, 1, &VertexSourcePointer , NULL);
-	glCompileShader(VertexShaderID);
-
-	// Check Vertex Shader
-	glGetShaderiv(VertexShaderID, GL_COMPILE_STATUS, &Result);
-	glGetShaderiv(VertexShaderID, GL_INFO_LOG_LENGTH, &InfoLogLength);
-	std::vector<char> VertexShaderErrorMessage(InfoLogLength);
-	glGetShaderInfoLog(VertexShaderID, InfoLogLength, NULL, &VertexShaderErrorMessage[0]);
-	fprintf(stdout, "%s\n", &VertexShaderErrorMessage[0]);
-
-	// Compile Fragment Shader
-	printf("Compiling shader : %s\n", fragment_file_path);
-	char const * FragmentSourcePointer = FragmentShaderCode.c_str();
-	glShaderSource(FragmentShaderID, 1, &FragmentSourcePointer , NULL);
-	glCompileShader(FragmentShaderID);
-
-	// Check Fragment Shader
-	glGetShaderiv(FragmentShaderID, GL_COMPILE_STATUS, &Result);
-	glGetShaderiv(FragmentShaderID, GL_INFO_LOG_LENGTH, &InfoLogLength);
-	std::vector<char> FragmentShaderErrorMessage(InfoLogLength);
-	glGetShaderInfoLog(FragmentShaderID, InfoLogLength, NULL, &FragmentShaderErrorMessage[0]);
-	fprintf(stdout, "%s\n", &FragmentShaderErrorMessage[0]);
-
-	// Link the program
-	fprintf(stdout, "Linking program\n");
-	GLuint ProgramID = glCreateProgram();
-	glAttachShader(ProgramID, VertexShaderID);
-	glAttachShader(ProgramID, FragmentShaderID);
-	glLinkProgram(ProgramID);
-
-	// Check the program
-	glGetProgramiv(ProgramID, GL_LINK_STATUS, &Result);
-	glGetProgramiv(ProgramID, GL_INFO_LOG_LENGTH, &InfoLogLength);
-	std::vector<char> ProgramErrorMessage( max(InfoLogLength, int(1)) );
-	glGetProgramInfoLog(ProgramID, InfoLogLength, NULL, &ProgramErrorMessage[0]);
-	fprintf(stdout, "%s\n", &ProgramErrorMessage[0]);
-
-	glDeleteShader(VertexShaderID);
-	glDeleteShader(FragmentShaderID);
-
-	return ProgramID;
-}
-
-static void error_callback(int error, const char* description)
-{
-	fprintf(stderr, "Error: %s\n", description);
-}
-
-void quit(GLFWwindow *window)
-{
-	glfwDestroyWindow(window);
-	glfwTerminate();
-	exit(EXIT_SUCCESS);
-}
-
-/* Generate VAO, VBOs and return VAO handle */
-struct VAO* create3DObject (GLenum primitive_mode, int numVertices, const GLfloat* vertex_buffer_data, const GLfloat* color_buffer_data, GLenum fill_mode=GL_FILL)
-{
-	struct VAO* vao = new struct VAO;
-	vao->PrimitiveMode = primitive_mode;
-	vao->NumVertices = numVertices;
-	vao->FillMode = fill_mode;
-
-	// Create Vertex Array Object
-	// Should be done after CreateWindow and before any other GL calls
-	glGenVertexArrays(1, &(vao->VertexArrayID)); // VAO
-	glGenBuffers (1, &(vao->VertexBuffer)); // VBO - vertices
-	glGenBuffers (1, &(vao->ColorBuffer));  // VBO - colors
-
-	glBindVertexArray (vao->VertexArrayID); // Bind the VAO
-	glBindBuffer (GL_ARRAY_BUFFER, vao->VertexBuffer); // Bind the VBO vertices
-	glBufferData (GL_ARRAY_BUFFER, 3*numVertices*sizeof(GLfloat), vertex_buffer_data, GL_STATIC_DRAW); // Copy the vertices into VBO
-	glVertexAttribPointer(
-		0,                  // attribute 0. Vertices
-		3,                  // size (x,y,z)
-		GL_FLOAT,           // type
-		GL_FALSE,           // normalized?
-		0,                  // stride
-		(void*)0            // array buffer offset
-		);
-
-	glBindBuffer (GL_ARRAY_BUFFER, vao->ColorBuffer); // Bind the VBO colors
-	glBufferData (GL_ARRAY_BUFFER, 3*numVertices*sizeof(GLfloat), color_buffer_data, GL_STATIC_DRAW);  // Copy the vertex colors
-	glVertexAttribPointer(
-		1,                  // attribute 1. Color
-		3,                  // size (r,g,b)
-		GL_FLOAT,           // type
-		GL_FALSE,           // normalized?
-		0,                  // stride
-		(void*)0            // array buffer offset
-		);
-
-	return vao;
-}
-
-/* Generate VAO, VBOs and return VAO handle - Common Color for all vertices */
-struct VAO* create3DObject (GLenum primitive_mode, int numVertices, const GLfloat* vertex_buffer_data, const GLfloat red, const GLfloat green, const GLfloat blue, GLenum fill_mode=GL_FILL)
-{
-	GLfloat* color_buffer_data = new GLfloat [3*numVertices];
-	for (int i=0; i<numVertices; i++) {
-		color_buffer_data [3*i] = red;
-		color_buffer_data [3*i + 1] = green;
-		color_buffer_data [3*i + 2] = blue;
-	}
-
-	return create3DObject(primitive_mode, numVertices, vertex_buffer_data, color_buffer_data, fill_mode);
-}
-
-/* Render the VBOs handled by VAO */
-void draw3DObject (struct VAO* vao)
-{
-	// Change the Fill Mode for this object
-	glPolygonMode (GL_FRONT_AND_BACK, vao->FillMode);
-
-	// Bind the VAO to use
-	glBindVertexArray (vao->VertexArrayID);
-
-	// Enable Vertex Attribute 0 - 3d Vertices
-	glEnableVertexAttribArray(0);
-	// Bind the VBO to use
-	glBindBuffer(GL_ARRAY_BUFFER, vao->VertexBuffer);
-
-	// Enable Vertex Attribute 1 - Color
-	glEnableVertexAttribArray(1);
-	// Bind the VBO to use
-	glBindBuffer(GL_ARRAY_BUFFER, vao->ColorBuffer);
-
-	// Draw the geometry !
-	glDrawArrays(vao->PrimitiveMode, 0, vao->NumVertices); // Starting from vertex 0; 3 vertices total -> 1 triangle
-}
-
-/**************************
- * Customizable functions *
- **************************/
-
-float zoom = 4.0, pan = 0.0;
 
 /* Executed when a regular key is pressed/released/held-down */
 /* Prefered for Keyboard events */
@@ -252,18 +69,16 @@ void keyboard (GLFWwindow* window, int key, int scancode, int action, int mods)
 	else if (action == GLFW_REPEAT) {
 		switch (key) {
 		case GLFW_KEY_UP:
-			eye_y += 1;
-			zoom = max(0.5f, zoom);
+			Eye.eye_y += 1;
 			break;
 		case GLFW_KEY_DOWN:
-			eye_y -= 1;
-			zoom = min(6.5f, zoom);
+			Eye.eye_y -= 1;
 			break;
 		case GLFW_KEY_LEFT:
-			eye_x -=1;
+			Eye.eye_x -=1;
 			break;
 		case GLFW_KEY_RIGHT:
-			eye_x += 1;
+			Eye.eye_x += 1;
 			break;
 		}
 	}
@@ -278,18 +93,18 @@ void keyboardChar (GLFWwindow* window, unsigned int key)
 		quit(window);
 		break;
 	case 'i':
-		zoom += 0.5;
-		zoom = min(6.5f, zoom);
+		Eye.zoom += 0.5;
+		Eye.zoom = min(6.5f, Eye.zoom);
 		break;
 	case 'k':
-		zoom -= 0.5;
-		zoom = max(0.5f, zoom);
+		Eye.zoom -= 0.5;
+		Eye.zoom = max(0.5f, Eye.zoom);
 		break;
 	case 'j':
-		pan+=0.5;
+		Eye.pan+=0.5;
 		break;
 	case 'l':
-		pan-=0.5;
+		Eye.pan-=0.5;
 		break;
 	}
 }
@@ -332,10 +147,10 @@ void reshapeWindow (GLFWwindow* window, int width, int height)
 	// Perspective projection for 3D views
 	// Matrices.projection = glm::perspective (fov, (GLfloat) fbwidth / (GLfloat) fbheight, 0.1f, 500.0f);
 
-	pan = zoom;
+	Eye.pan = Eye.zoom;
 
 	// Ortho projection for 2D views
-	Matrices.projection = glm::ortho(zoom*-1.0f - pan, zoom + pan, zoom*-1.0f, zoom, 0.1f, 500.0f);
+	Matrices.projection = glm::ortho(Eye.zoom*-1.0f - Eye.pan, Eye.zoom + Eye.pan, Eye.zoom*-1.0f, Eye.zoom, 0.1f, 500.0f);
 	// Matrices.projection = glm::ortho(-4.0f, 4.0f, -4.0f, 4.0f, 0.1f, 500.0f);
 }
 
@@ -444,10 +259,10 @@ void draw ()
 	// Up - Up vector defines tilt of camera.  Don't change unless you are sure!!
 	glm::vec3 up (0, 1, 0);
 
-	// Compute Camera matrix (view)
-	// Matrices.view = glm::lookAt( eye, target, up ); // Rotating Camera for 3D
+	// Compute Eye matrix (view)
+	// Matrices.view = glm::lookAt( eye, target, up ); // Rotating Eye for 3D
 	//  Don't change unless you are sure!!
-	Matrices.view = glm::lookAt(glm::vec3(eye_x, eye_y, 3), glm::vec3(0, 0, 0), glm::vec3(0, 1, 0)); // Fixed camera for 2D (ortho) in XY plane
+	Matrices.view = glm::lookAt(glm::vec3(Eye.eye_x, Eye.eye_y, 3), glm::vec3(0, 0, 0), glm::vec3(0, 1, 0)); // Fixed camera for 2D (ortho) in XY plane
 
 	// Compute ViewProject matrix as view/camera might not be changed for this frame (basic scenario)
 	//  Don't change unless you are sure!!
@@ -490,58 +305,9 @@ void draw ()
 
 	//####################################################################################################
 
-	// MVP = VP * glm::translate (glm::vec3(Cannon.x, Cannon.y+5, 0));
-	// glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
-	// draw3DObject(Scene.sun);
-
-	// for(int i=-10; i<10; i++) {
-	// 	MVP = VP * glm::translate (glm::vec3(Cannon.x-0.5+5*i, Cannon.y+3, 0));
-	// 	glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
-	// 	draw3DObject(Scene.mountain);
-	// }
-
-	// for(int i=-10; i<10; i++) {
-	// 	MVP = VP * glm::translate (glm::vec3(Cannon.x-0.5+5*i, Cannon.y+3, 0));
-	// 	glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
-	// 	draw3DObject(Scene.snow);
-	// }
-
-	// for(int i=-10; i<10; i++) {
-	// 	MVP = VP * glm::translate (glm::vec3(Cannon.x-3+5*i, Cannon.y+3.8, 0));
-	// 	glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
-	// 	draw3DObject(Scene.snow);
-	// }
-
-	// MVP = VP;
-	// glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
-	// draw3DObject(Floor.sprite);
-
-	MVP = VP;
+	MVP = VP * glm::translate (glm::vec3(Floor.x, Floor.y, 0));
 	glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
 	draw3DObject(Floor.sprite);
-
-	// for(int i=-100; i<100; i++) {
-	// 	MVP = VP * glm::translate (glm::vec3(Cannon.x-0.5+0.4*i, Cannon.y-0.7, 0));
-	// 	glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
-	// 	draw3DObject(Scene.grass);
-	// }
-
-
-	// MVP = VP * glm::translate (glm::vec3(CWall.x, CWall.y, 0));
-	// glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
-	// draw3DObject(CWall.sprite);
-
-	// MVP = VP * glm::translate (glm::vec3(Cannon.x, Cannon.y, 0));
-	// glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
-	// // draw3DObject draws the VAO given to it using current MVP matrix
-	// draw3DObject(Cannon.base);
-
-	// for (int j=0; j<bird_count; j++) {
-	// 	MVP = VP * glm::translate (glm::vec3(Bird[j].x, Bird[j].y, 0));
-	// 	glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
-	// 	// draw3DObject draws the VAO given to it using current MVP matrix
-	// 	draw3DObject(Bird[j].sprite);
-	// }
 
 	// Matrices.model = glm::mat4(1.0f);
 	// glm::mat4 translateBarrel = glm::translate (glm::vec3(Cannon.x, Cannon.y, 0));
@@ -551,25 +317,10 @@ void draw ()
 	// glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
 	// // draw3DObject draws the VAO given to it using current MVP matrix
 	// draw3DObject(Cannon.barrel);
-
 	// MVP = VP * glm::translate (glm::vec3(PowerBar.x, PowerBar.y, 0)) * glm::scale(glm::vec3(2*Cannon.power, 1.0f, 1.0f));
 	// glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
 	// // draw3DObject draws the VAO given to it using current MVP matrix
 	// draw3DObject(PowerBar.sprite);
-
-	// for(int i=0; i<ENEMY_NUMBER; i++) {
-	// 	if (!Enemies[i].alive)
-	// 		continue;
-	// 	MVP = VP * glm::translate (glm::vec3(Enemies[i].x, Enemies[i].y, 0));
-	// 	glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
-	// 	draw3DObject(Enemies[i].sprite);
-	// }
-
-	// for(int i=0; i<WOOD_NUMBER; i++) {
-	// 	MVP = VP * glm::translate (glm::vec3(Wood[i].x, Wood[i].y, 0));
-	// 	glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
-	// 	draw3DObject(Wood[i].sprite);
-	// }
 
 	//####################################################################################################
 
@@ -580,12 +331,12 @@ void draw ()
 void scrollFunc(GLFWwindow *window, double xpos, double ypos)
 {
 	if(ypos == 1) {
-		zoom -= 0.5;
-		zoom = max(0.5f, zoom);
+		Eye.zoom -= 0.5;
+		Eye.zoom = max(0.5f, Eye.zoom);
 	}
 	else {
-		zoom += 0.5;
-		zoom = min(6.5f, zoom);
+		Eye.zoom += 0.5;
+		Eye.zoom = min(6.5f, Eye.zoom);
 	}
 }
 
@@ -686,6 +437,7 @@ int main (int argc, char** argv)
 		reshapeWindow (window, width, height);
 
 		// OpenGL Draw commands
+		gravity();
 		draw();
 
 		// Swap Frame Buffer in double buffering
