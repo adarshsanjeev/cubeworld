@@ -26,6 +26,12 @@ public:
   int camera_type;
   Camera () {
 	camera_type = TOWER;
+ 	x = 0;
+   	y = 3;
+  	z = 3;
+  	LookAt_x = 0;
+  	LookAt_y = -2.5;
+  	LookAt_z = 0;
 	zoom = 4.0;
 	pan = 0.0;  }
 }Eye;
@@ -378,82 +384,105 @@ void createChar ()
 
 void createFloor ()
 {
+
   static const GLfloat g_vertex_buffer_data[] = {
 	-1.0f,-1.0f,-1.0f, // triangle 1 : begin
 	-1.0f,-1.0f, 1.0f,
 	-1.0f, 1.0f, 1.0f, // triangle 1 : end
-	1.0f, 1.0f,-1.0f, // triangle 2 : begin
+
+	-1.0f,-1.0f,-1.0f,
+	-1.0f, 1.0f, 1.0f,
+	-1.0f, 1.0f,-1.0f,
+
+	 1.0f, 1.0f,-1.0f, // triangle 2 : begin
 	-1.0f,-1.0f,-1.0f,
 	-1.0f, 1.0f,-1.0f, // triangle 2 : end
-	1.0f,-1.0f, 1.0f,
+
+ 	 1.0f,-1.0f, 1.0f,
 	-1.0f,-1.0f,-1.0f,
-	1.0f,-1.0f,-1.0f,
-	1.0f, 1.0f,-1.0f,
-	1.0f,-1.0f,-1.0f,
+	 1.0f,-1.0f,-1.0f,
+
+	 1.0f, 1.0f,-1.0f,
+	 1.0f,-1.0f,-1.0f,
 	-1.0f,-1.0f,-1.0f,
-	-1.0f,-1.0f,-1.0f,
-	-1.0f, 1.0f, 1.0f,
-	-1.0f, 1.0f,-1.0f,
-	1.0f,-1.0f, 1.0f,
+
+	 1.0f,-1.0f, 1.0f,
 	-1.0f,-1.0f, 1.0f,
 	-1.0f,-1.0f,-1.0f,
+
 	-1.0f, 1.0f, 1.0f,
 	-1.0f,-1.0f, 1.0f,
-	1.0f,-1.0f, 1.0f,
-	1.0f, 1.0f, 1.0f,
-	1.0f,-1.0f,-1.0f,
-	1.0f, 1.0f,-1.0f,
-	1.0f,-1.0f,-1.0f,
-	1.0f, 1.0f, 1.0f,
-	1.0f,-1.0f, 1.0f,
-	1.0f, 1.0f, 1.0f,
-	1.0f, 1.0f,-1.0f,
+	 1.0f,-1.0f, 1.0f,
+
+	 1.0f, 1.0f, 1.0f,
+	 1.0f,-1.0f,-1.0f,
+	 1.0f, 1.0f,-1.0f,
+
+	 1.0f,-1.0f,-1.0f,
+	 1.0f, 1.0f, 1.0f,
+	 1.0f,-1.0f, 1.0f,
+
+	 1.0f, 1.0f, 1.0f,
+	 1.0f, 1.0f,-1.0f,
 	-1.0f, 1.0f,-1.0f,
-	1.0f, 1.0f, 1.0f,
+
+	 1.0f, 1.0f, 1.0f,
 	-1.0f, 1.0f,-1.0f,
 	-1.0f, 1.0f, 1.0f,
-	1.0f, 1.0f, 1.0f,
+
+	 1.0f, 1.0f, 1.0f,
 	-1.0f, 1.0f, 1.0f,
-	1.0f,-1.0f, 1.0f
+	 1.0f,-1.0f, 1.0f
   };
 
   static const GLfloat g_color_buffer_data[] = {
-	0.0f, 0.0f, 0.0f, // triangle 1 : begin
-	0.0f, 0.0f, 0.0f,
-	0.0f, 0.0f, 0.0f, // triangle 1 : end
-	1.0f, 1.0f, 1.0f, // triangle 2 : begin
-	1.0f, 1.0f, 1.0f,
-	1.0f, 1.0f, 1.0f, // triangle 2 : end
-	1.0f, 0.0f, 1.0f,
-	1.0f, 0.0f, 0.0f,
-	1.0f, 1.0f, 0.0f,
-	1.0f, 1.0f, 1.0f,
-	1.0f, 1.0f, 1.0f,
-	1.0f, 1.0f, 1.0f,
-	1.0f, 1.0f, 1.0f,
-	0.7f, 0.4f, 0.2f,
-	1.0f, 1.0f, 1.0f,
-	1.0f, 0.0f, 1.0f,
-	0.0f, 1.0f, 1.0f,
-	1.0f, 1.0f, 0.0f,
-	1.0f, 0.0f, 0.0f,
-	1.0f, 1.0f, 1.0f,
-	1.0f, 0.0f, 1.0f,
-	1.0f, 1.0f, 1.0f,
-	1.0f, 1.0f, 1.0f,
-	0.0f, 0.0f, 0.0f,
-	1.0f, 1.0f, 1.0f,
-	0.0f, 1.0f, 0.0f,
-	1.0f, 1.0f, 1.0f,
-	1.0f, 1.0f, 1.0f,
-	1.0f, 0.4f, 0.0f,
-	1.0f, 1.0f, 1.0f,
-	1.0f, 1.0f, 1.0f,
-	1.0f, 0.0f, 1.0f,
-	1.0f, 0.0f, 1.0f,
-	1.0f, 0.0f, 0.0f,
-	1.0f, 1.0f, 1.0f,
-	1.0f, 1.0f, 1.0f
+	0.4f, 0.4f, 0.4f, // triangle 1 : begin
+	0.1f, 0.1f, 0.1f,
+	0.4f, 0.4f, 0.4f, // triangle 1 : end
+
+	0.4f, 0.4f, 0.4f,
+	0.4f, 0.4f, 0.4f,
+	0.5f, 0.5f, 0.5f,
+
+	0.8f, 0.8f, 0.8f, // triangle 2 : begin
+	0.6f, 0.6f, 0.6f,
+	0.6f, 0.6f, 0.6f, // triangle 2 : end
+
+	0.2f, 0.2f, 0.2f,
+	0.2f, 0.2f, 0.2f,
+	0.3f, 0.3f, 0.3f,
+
+	0.8f, 0.8f, 0.8f,
+	0.6f, 0.6f, 0.6f,
+	0.6f, 0.6f, 0.6f,
+
+	0.2f, 0.2f, 0.2f,
+	0.1f, 0.1f, 0.1f,
+	0.2f, 0.2f, 0.2f,
+
+	0.2f, 0.2f, 0.2f,
+	0.1f, 0.1f, 0.1f,
+	0.2f, 0.2f, 0.2f,
+
+	0.6f, 0.6f, 0.6f,
+	0.6f, 0.6f, 0.6f,
+	0.8f, 0.8f, 0.8f,
+
+	0.6f, 0.6f, 0.6f,
+	0.6f, 0.6f, 0.6f,
+	0.5f, 0.5f, 0.5f,
+
+	0.6f, 0.6f, 0.6f,
+	0.7f, 0.7f, 0.7f,
+	0.6f, 0.6f, 0.6f,
+
+	0.6f, 0.6f, 0.6f,
+	0.6f, 0.6f, 0.6f,
+	0.5f, 0.5f, 0.5f,
+
+	0.4f, 0.4f, 0.4f,
+	0.2f, 0.2f, 0.2f,
+	0.2f, 0.2f, 0.2f
   };
   for(int i=0; i<FLOOR_LENGTH; i++)
 	for(int j=0; j<FLOOR_LENGTH; j++) {
@@ -469,7 +498,7 @@ void createFloor ()
 		Floor[i][j].z = -2*j;
 	  // }
 	  Floor[i][j].y = -3;
-	  Floor[i][j].sprite = create3DObject(GL_TRIANGLES, 45, g_vertex_buffer_data, g_color_buffer_data, GL_FILL);
+	  Floor[i][j].sprite = create3DObject(GL_TRIANGLES, 36, g_vertex_buffer_data, g_color_buffer_data, GL_FILL);
 	}
 }
 
