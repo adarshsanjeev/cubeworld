@@ -34,7 +34,7 @@ class Character {
 public:
   float x, y, z;
   glm::vec3 vel;
-  float size_x, size_y;
+  float size_x, size_y, size_z;
   VAO *sprite;
 } Cube;
 
@@ -45,54 +45,113 @@ public:
   VAO *sprite;
 } Floor[FLOOR_LENGTH][FLOOR_LENGTH];
 
-Wall* getFloorSquare(float x, float z)
+pair<int, int> getFloorSquare(float x, float z)
 {
   z*=-1;
-  if (x<-1.5 || x>39.5)
-	return NULL;
-  if (z<-1.5 || z>39.5)
-	return NULL;
+  if (x<-1.5 || x>39.5 || z<-1.5 || z>39.5)
+	return make_pair(-1, -1);
   else
-	return &Floor[(int)(x+1)/2][(int)(z+1)/2];
+	return make_pair((int)(x+1)/2, (int)(z+1)/2);
 }
 
-// Wall* getVertSquare(float x, float z)
-// {
-//   z*=-1;
-//   if (x<-1.5 || x>39.5 || z<-1.5 || z>39.5)
-// 	return NULL;
+void VertColl(float x, float z) {
+  pair<int, int> floor_pair = getFloorSquare(x, z);
+  int floor_i = floor_pair.first;
+  int floor_j = floor_pair.second;
 
-//   Wall* Block = getFloorSquare(x, z);
-// }
+  if(floor_i == -1 || floor_j == -1)
+	return;
+
+  Wall* Block = &Floor[floor_i][floor_j];
+  if ( (Cube.y-Cube.size_y/2) <= (Block->y+Block->size_y/2) &&
+	   (Cube.y+Cube.size_y/2) >= (Block->y-Block->size_y/2) )
+	if (Cube.x > Block->x-Block->size_x/2 && Cube.x<Block->x+Block->size_x/2)
+	  if (Cube.z > Block->z-Block->size_z/2 && Cube.z < Block->z+Block->size_z/2) {
+			Cube.vel[1] = Cube.vel[1]>0 ? Cube.vel[1]:0;
+			if((floor_i+floor_j)%2)
+			  Block->y -= 0.1;
+	  }
+}
 
 void gravity() {
   Cube.vel += glm::vec3(0.0f, -0.0009f, 0.0f);
-  Wall* Block = getFloorSquare(Cube.x, Cube.z);
 
   // Vertical collision
-  if (Block != NULL)
-	if (Cube.y-Cube.size_y/2 <= Block->y+Block->size_y/2 && Cube.y+Cube.size_y/2 >= Block->y-Block->size_y/2)
-	  if (Cube.x>Block->x-Block->size_x/2 && Cube.x<Block->x+Block->size_x/2)
-	  	  if (Cube.z>Block->z-Block->size_z/2 && Cube.z<Block->z+Block->size_z/2) {
-			Cube.vel[1] = Cube.vel[1]>0 ? Cube.vel[1]:0;
-			  Block->y -= 0.01;
-		  }
+  VertColl(Cube.x, Cube.z);
 
   Cube.x += Cube.vel[0];
   Cube.y += Cube.vel[1];
   Cube.z += Cube.vel[2];
 }
 
-// void moveCube(float x, float z)
-// {
-//   float floor_x, floor_z;
-//   floor_x =	(int)(x+1)/2;
-//   floor_z = (int)(z+1)/2;
+void moveCube(float x, float z)
+{
+  pair<int, int> floor_pair = getFloorSquare(Cube.x, Cube.z);
+  int floor_i = floor_pair.first;
+  int floor_j = floor_pair.second;
 
-//   if(x>0) {
-// 	if(Cube.x+Cube.size_x/2 > )
-//   }
-// }
+  if(x>0) {
+	if(floor_i == -1 || floor_i == 20) {
+	  Cube.x += 0.1;
+	  return;
+	}
+	Wall* NextCube = &Floor[floor_i+1][floor_j];
+	if ( (Cube.y-Cube.size_y/2+0.1) <= (NextCube->y+NextCube->size_y/2) &&
+		 (Cube.y+Cube.size_y/2) >= (NextCube->y-NextCube->size_y/2) ) { // Check no y overlap
+	  if ( (Cube.x+Cube.size_x/2+0.01) < (NextCube->x-NextCube->size_x/2) )
+		Cube.x += 0.1;
+	}
+	else
+	  Cube.x += 0.1;
+  }
+
+  else if(x<0) {
+	if(floor_i == -1 || floor_i == 0) {
+	  Cube.x -= 0.1;
+	  return;
+	}
+	Wall* NextCube = &Floor[floor_i-1][floor_j];
+	if ( (Cube.y-Cube.size_y/2+0.1) <= (NextCube->y+NextCube->size_y/2) &&
+		 (Cube.y+Cube.size_y/2) >= (NextCube->y-NextCube->size_y/2) ) { // Check no y overlap
+	  if ( (Cube.x-Cube.size_x/2-0.01) > (NextCube->x+NextCube->size_x/2) )
+		Cube.x -= 0.1;
+	}
+	else
+	  Cube.x -= 0.1;
+  }
+
+  else if(z<0) {
+	if(floor_j == -1 || floor_j == 20) {
+	  Cube.z -= 0.1;
+	  return;
+	}
+	Wall* NextCube = &Floor[floor_i][floor_j+1];
+	if ( (Cube.y-Cube.size_y/2+0.1) <= (NextCube->y+NextCube->size_y/2) &&
+		 (Cube.y+Cube.size_y/2) >= (NextCube->y-NextCube->size_y/2) ) { // Check no y overlap
+	  if ( (Cube.z-Cube.size_z/2-0.01) > (NextCube->z+NextCube->size_z/2) )
+		Cube.z -= 0.1;
+	}
+	else
+	  Cube.z -= 0.1;
+  }
+
+  else if(z>0) {
+	if(floor_j == -1 || floor_j == 0) {
+	  Cube.z += 0.1;
+	  return;
+	}
+	Wall* NextCube = &Floor[floor_i][floor_j-1];
+	if ( (Cube.y-Cube.size_y/2+0.1) <= (NextCube->y+NextCube->size_y/2) &&
+		 (Cube.y+Cube.size_y/2) >= (NextCube->y-NextCube->size_y/2) ) { // Check no y overlap
+	  cout<<Cube.z+Cube.size_z/2+0.01<<":"<<(NextCube->z-NextCube->size_z/2)<<endl;
+	  if ( (Cube.z+Cube.size_z/2+0.01) < (NextCube->z-NextCube->size_z/2) )
+		Cube.z += 0.1;
+	}
+	else
+	  Cube.z += 0.1;
+  }
+
+}
 
 /* Executed when a regular key is pressed/released/held-down */
 /* Prefered for Keyboard events */
@@ -108,7 +167,7 @@ void keyboard (GLFWwindow* window, int key, int scancode, int action, int mods)
 	  quit(window);
 	  break;
 	case GLFW_KEY_SPACE:
-	  Cube.vel += glm::vec3 (0, 0.1, 0);
+	  Cube.vel += glm::vec3 (0, 0.08, 0);
 	  break;
 	}
   }
@@ -154,16 +213,16 @@ void keyboardChar (GLFWwindow* window, unsigned int key)
 	Eye.pan-=0.5;
 	break;
   case 'w':
-	Cube.z -= 0.1;
+	moveCube(0, -0.1);
 	break;
   case 's':
-	Cube.z += 0.1;
+	moveCube(0, 0.1);
 	break;
   case 'a':
-	Cube.x -= 0.1;
+	moveCube(-0.1, 0);
 	break;
   case 'd':
-	Cube.x += 0.1;
+	moveCube(0.1, 0);
 	break;
 
   case '1':
@@ -310,6 +369,7 @@ void createChar ()
   Cube.vel = glm::vec3(0, 0, 0);
   Cube.size_x = 1;
   Cube.size_y = 1;
+  Cube.size_z = 1;
   Cube.x = 0;
   Cube.y = -1;
   Cube.z = 0;
