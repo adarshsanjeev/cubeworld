@@ -21,14 +21,13 @@ class Camera
 {
 public:
   float x, y, z;
+  float LookAt_x, LookAt_y, LookAt_z;
   float zoom, pan;
   int camera_type;
   Camera () {
-	x=0,y=3,z=3;
 	camera_type = TOWER;
 	zoom = 4.0;
-	pan = 0.0;
-  }
+	pan = 0.0;  }
 }Eye;
 
 class Character {
@@ -42,7 +41,7 @@ public:
 class Wall {
 public:
   float x, y, z;
-  float size_x, size_y;
+	float size_x, size_y, size_z;
   VAO *sprite;
 } Floor[FLOOR_LENGTH][FLOOR_LENGTH];
 
@@ -57,24 +56,43 @@ Wall* getFloorSquare(float x, float z)
 	return &Floor[(int)(x+1)/2][(int)(z+1)/2];
 }
 
+// Wall* getVertSquare(float x, float z)
+// {
+//   z*=-1;
+//   if (x<-1.5 || x>39.5 || z<-1.5 || z>39.5)
+// 	return NULL;
+
+//   Wall* Block = getFloorSquare(x, z);
+// }
+
 void gravity() {
   Cube.vel += glm::vec3(0.0f, -0.0009f, 0.0f);
   Wall* Block = getFloorSquare(Cube.x, Cube.z);
-  if(Block != NULL)
-	if(Cube.y-Cube.size_y/2 <= Block->y+Block->size_y/2) {
-	  Cube.vel[1] = 0;
-	  Block->y -= 0.05;
-  }
+
+  // Vertical collision
+  if (Block != NULL)
+	if (Cube.y-Cube.size_y/2 <= Block->y+Block->size_y/2 && Cube.y+Cube.size_y/2 >= Block->y-Block->size_y/2)
+	  if (Cube.x>Block->x-Block->size_x/2 && Cube.x<Block->x+Block->size_x/2)
+	  	  if (Cube.z>Block->z-Block->size_z/2 && Cube.z<Block->z+Block->size_z/2) {
+			Cube.vel[1] = Cube.vel[1]>0 ? Cube.vel[1]:0;
+			  Block->y -= 0.01;
+		  }
+
   Cube.x += Cube.vel[0];
   Cube.y += Cube.vel[1];
   Cube.z += Cube.vel[2];
 }
 
-void moveCube(float x, float z)
-{
-  Wall* CurrCube = getFloorSquare(Cube.x, Cube.z);
+// void moveCube(float x, float z)
+// {
+//   float floor_x, floor_z;
+//   floor_x =	(int)(x+1)/2;
+//   floor_z = (int)(z+1)/2;
 
-}
+//   if(x>0) {
+// 	if(Cube.x+Cube.size_x/2 > )
+//   }
+// }
 
 /* Executed when a regular key is pressed/released/held-down */
 /* Prefered for Keyboard events */
@@ -112,6 +130,7 @@ void keyboard (GLFWwindow* window, int key, int scancode, int action, int mods)
   }
 }
 
+
 /* Executed for character input (like in text boxes) */
 void keyboardChar (GLFWwindow* window, unsigned int key)
 {
@@ -136,19 +155,15 @@ void keyboardChar (GLFWwindow* window, unsigned int key)
 	break;
   case 'w':
 	Cube.z -= 0.1;
-	Eye.z -= 0.1;
 	break;
   case 's':
 	Cube.z += 0.1;
-	Eye.z += 0.1;
 	break;
   case 'a':
 	Cube.x -= 0.1;
-	Eye.x -= 0.1;
 	break;
   case 'd':
 	Cube.x += 0.1;
-	Eye.x += 0.1;
 	break;
 
   case '1':
@@ -156,6 +171,15 @@ void keyboardChar (GLFWwindow* window, unsigned int key)
 	break;
   case '2':
 	Eye.camera_type = TOP;
+	break;
+  case '3':
+	Eye.camera_type = ADVENTURE;
+	break;
+  case '4':
+	Eye.camera_type = FOLLOW;
+	break;
+  case '5':
+	Eye.camera_type = HELI;
 	break;
   }
 }
@@ -375,14 +399,15 @@ void createFloor ()
 	for(int j=0; j<FLOOR_LENGTH; j++) {
 	  Floor[i][j].size_x = 2;
 	  Floor[i][j].size_y = 2;
-	  if((i+j)%2) {
-		Floor[i][j].x = 200*i;
-		Floor[i][j].z = -200*j;
-	  }
-	  else {
+	  Floor[i][j].size_z = 2;
+	  // if((i+j)%2) {
+	  // 	Floor[i][j].x = 200*i;
+	  // 	Floor[i][j].z = -200*j;
+	  // }
+	  // else {
 		Floor[i][j].x = 2*i;
 		Floor[i][j].z = -2*j;
-	  }
+	  // }
 	  Floor[i][j].y = -3;
 	  Floor[i][j].sprite = create3DObject(GL_TRIANGLES, 45, g_vertex_buffer_data, g_color_buffer_data, GL_FILL);
 	}
@@ -413,7 +438,7 @@ void draw ()
   // Compute Eye matrix (view)
   // Matrices.view = glm::lookAt( eye, target, up ); // Rotating Eye for 3D
   //  Don't change unless you are sure!!
-  Matrices.view = glm::lookAt(glm::vec3(Eye.x, Eye.y, Eye.z), glm::vec3(Cube.x, Cube.y, Cube.z), glm::vec3(0, 1, 0)); // Fixed camera for 2D (ortho) in XY plane
+  Matrices.view = glm::lookAt(glm::vec3(Eye.x, Eye.y, Eye.z), glm::vec3(Eye.LookAt_x, Eye.LookAt_y, Eye.LookAt_z), glm::vec3(0, 1, 0)); // Fixed camera for 2D (ortho) in XY plane
 
   // Compute ViewProject matrix as view/camera might not be changed for this frame (basic scenario)
   //  Don't change unless you are sure!!
@@ -556,20 +581,37 @@ void cursor_position_callback(GLFWwindow* window, double xpos, double ypos)
 {
 }
 
+// x=1,y=2,z=-1;
+// LookAt_x=10, LookAt_y=1, LookAt_z=-10;
+
 void set_cam()
 {
-  // switch(Eye.camera_type) {
-  // case TOWER:
-  // 	Eye.x = Cube.x;
-  // 	Eye.y = Cube.y+3;
-  // 	Eye.z = Cube.z+3;
-  // 	break;
-  // case TOP:
-  // 	Eye.x = Cube.x;
-  // 	Eye.y = Cube.y+3;
-  // 	Eye.z = Cube.z+0.1;
-  // 	break;
-  // }
+  switch(Eye.camera_type) {
+  case ADVENTURE:
+  	Eye.x = Cube.x;
+  	Eye.y = Cube.y + 2;
+  	Eye.z = Cube.z;
+  	Eye.LookAt_x = Cube.x+5;
+  	Eye.LookAt_y = Cube.y+1;
+  	Eye.LookAt_z = Cube.z;
+  	break;
+  case TOWER:
+  	Eye.x = Cube.x;
+  	Eye.y = Cube.y+3;
+  	Eye.z = Cube.z+3;
+  	Eye.LookAt_x = Cube.x;
+  	Eye.LookAt_y = Cube.y;
+  	Eye.LookAt_z = Cube.z;
+  	break;
+  case TOP:
+  	Eye.x = Cube.x;
+  	Eye.y = Cube.y+3;
+  	Eye.z = Cube.z+0.0001;
+  	Eye.LookAt_x = Cube.x;
+  	Eye.LookAt_y = Cube.y;
+  	Eye.LookAt_z = Cube.z;
+  	break;
+  }
 }
 
 int main (int argc, char** argv)
@@ -586,11 +628,6 @@ int main (int argc, char** argv)
   while (!glfwWindowShouldClose(window)) {
 	reshapeWindow (window, width, height);
 
-	// OpenGL Draw commands
-	gravity();
-	set_cam();
-	draw();
-
 	// Swap Frame Buffer in double buffering
 	glfwSwapBuffers(window);
 
@@ -598,6 +635,13 @@ int main (int argc, char** argv)
 	glfwPollEvents();
 
 	glfwSetCursorPosCallback(window, cursor_position_callback);
+
+	gravity();
+
+	set_cam();
+
+	// OpenGL Draw commands
+	draw();
 
 	// The function signature for cursor position callbacks. More...
 	// Control based on time (Time based transformation like 5 degrees rotation every 0.5s)
