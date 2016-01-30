@@ -13,10 +13,13 @@
 #include "cube.h"
 #define FLOOR_LENGTH 20
 #define	GRAV_CONST 0.009;
+
 using namespace std;
 
-enum camera_type {ADVENTURE=1, FOLLOW=2, TOWER=3, TOP=4, HELI=5};
-enum block_type {STABLE=1, DEAD=2, UNSTABLE=3};
+enum camera_type {ADVENTURE, FOLLOW, TOWER, TOP, HELI};
+enum block_type {STABLE, DEAD, UNSTABLE};
+
+void createChar();
 
 class Camera
 {
@@ -24,7 +27,7 @@ public:
 	float x, y, z;
 	float LookAt_x, LookAt_y, LookAt_z;
 	float zoom, pan;
-	int camera_type;
+	camera_type camera_type;
 	Camera () {
 		camera_type = TOWER;
 		x = 0;
@@ -43,13 +46,18 @@ public:
 	glm::vec3 vel;
 	float size_x, size_y, size_z;
 	VAO *sprite;
+
+	void checkDie() {
+		if (y<-10)
+			createChar();
+	}
 } Cube;
 
 class Wall {
 public:
 	float x, y, z;
 	float size_x, size_y, size_z;
-	int type;
+	block_type type;
 
 	GLfloat g_vertex_buffer_data[36*3]= {
 		-1.0f,-0.6f,-1.0f, // triangle 1 : begin
@@ -176,8 +184,8 @@ void VertColl(float x, float z) {
 		if (Cube.x > Block->x-Block->size_x/2 && Cube.x<Block->x+Block->size_x/2)
 			if (Cube.z > Block->z-Block->size_z/2 && Cube.z < Block->z+Block->size_z/2) {
 				Cube.vel[1] = Cube.vel[1]>0 ? Cube.vel[1]:0;
-				if(Block->type == UNSTABLE) {
-					if(Block->y > -7)
+				if (Block->type == UNSTABLE) {
+					if (Block->y > -7)
 						Block->y -= 0.1;
 					else
 						Block->y += 110;
@@ -194,6 +202,7 @@ void gravity() {
 	Cube.x += Cube.vel[0];
 	Cube.y += Cube.vel[1];
 	Cube.z += Cube.vel[2];
+	Cube.checkDie();
 }
 
 void moveCube(float x, float z)
@@ -730,6 +739,10 @@ void set_cam()
 		Eye.LookAt_x = Cube.x;
 		Eye.LookAt_y = Cube.y;
 		Eye.LookAt_z = Cube.z;
+		break;
+	case FOLLOW:
+		break;
+	case HELI:
 		break;
 	}
 }
