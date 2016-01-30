@@ -16,6 +16,7 @@
 using namespace std;
 
 enum camera_type {ADVENTURE=1, FOLLOW=2, TOWER=3, TOP=4, HELI=5};
+enum block_type {STABLE=1, DEAD=2, UNSTABLE=3};
 
 class Camera
 {
@@ -48,6 +49,106 @@ class Wall {
 public:
 	float x, y, z;
 	float size_x, size_y, size_z;
+	int type;
+
+	GLfloat g_vertex_buffer_data[36*3]= {
+		-1.0f,-0.6f,-1.0f, // triangle 1 : begin
+		-1.0f,-1.0f, 1.0f,
+		-1.0f, 1.0f, 1.0f, // triangle 1 : end
+
+		-1.0f,-0.6f,-1.0f,
+		-1.0f, 1.0f, 1.0f,
+		-1.0f, 1.0f,-1.0f,
+
+		1.0f, 1.0f,-1.0f, // triangle 2 : begin
+		-1.0f,-0.6f,-1.0f,
+		-1.0f, 1.0f,-1.0f, // triangle 2 : end
+
+		1.0f,-0.6f, 1.0f,
+		-1.0f,-0.6f,-1.0f,
+		1.0f,-0.6f,-1.0f,
+
+		1.0f, 1.0f,-1.0f,
+		1.0f,-0.6f,-1.0f,
+		-1.0f,-0.6f,-1.0f,
+
+		1.0f,-0.6f, 1.0f,
+		-1.0f,-0.6f, 1.0f,
+		-1.0f,-0.6f,-1.0f,
+
+		-1.0f, 1.0f, 1.0f,
+		-1.0f,-0.6f, 1.0f,
+		1.0f,-0.6f, 1.0f,
+
+		1.0f, 1.0f, 1.0f,
+		1.0f,-0.6f,-1.0f,
+		1.0f, 1.0f,-1.0f,
+
+		1.0f,-0.6f,-1.0f,
+		1.0f, 1.0f, 1.0f,
+		1.0f,-1.0f, 1.0f,
+
+		1.0f, 1.0f, 1.0f,
+		1.0f, 1.0f,-1.0f,
+		-1.0f, 1.0f,-1.0f,
+
+		1.0f, 1.0f, 1.0f,
+		-1.0f, 1.0f,-1.0f,
+		-1.0f, 1.0f, 1.0f,
+
+		1.0f, 1.0f, 1.0f,
+		-1.0f, 1.0f, 1.0f,
+		1.0f,-0.6f, 1.0f
+	};
+	GLfloat g_color_buffer_data[36*3] = {
+		0.4f, 0.4f, 0.4f, // triangle 1 : begin
+		0.1f, 0.1f, 0.1f,
+		0.4f, 0.4f, 0.4f, // triangle 1 : end
+
+		0.4f, 0.4f, 0.4f,
+		0.4f, 0.4f, 0.4f,
+		0.5f, 0.5f, 0.5f,
+
+		0.8f, 0.8f, 0.8f, // triangle 2 : begin
+		0.6f, 0.6f, 0.6f,
+		0.6f, 0.6f, 0.6f, // triangle 2 : end
+
+		0.2f, 0.2f, 0.2f,
+		0.2f, 0.2f, 0.2f,
+		0.3f, 0.3f, 0.3f,
+
+		0.8f, 0.8f, 0.8f,
+		0.6f, 0.6f, 0.6f,
+		0.6f, 0.6f, 0.6f,
+
+		0.2f, 0.2f, 0.2f,
+		0.1f, 0.1f, 0.1f,
+		0.2f, 0.2f, 0.2f,
+
+		0.3f, 0.3f, 0.3f,
+		0.1f, 0.1f, 0.1f,
+		0.2f, 0.2f, 0.2f,
+
+		0.6f, 0.6f, 0.6f,
+		0.6f, 0.6f, 0.6f,
+		0.8f, 0.8f, 0.8f,
+
+		0.6f, 0.6f, 0.6f,
+		0.6f, 0.6f, 0.6f,
+		0.5f, 0.5f, 0.5f,
+
+		0.6f, 0.6f, 0.6f,
+		0.7f, 0.7f, 0.7f,
+		0.6f, 0.6f, 0.6f,
+
+		0.6f, 0.6f, 0.6f,
+		0.6f, 0.6f, 0.6f,
+		0.5f, 0.5f, 0.5f,
+
+		0.3f, 0.3f, 0.3f,
+		0.3f, 0.3f, 0.3f,
+		0.2f, 0.2f, 0.2f
+	};
 
 	VAO *sprite;
 } Floor[FLOOR_LENGTH][FLOOR_LENGTH];
@@ -75,7 +176,7 @@ void VertColl(float x, float z) {
 		if (Cube.x > Block->x-Block->size_x/2 && Cube.x<Block->x+Block->size_x/2)
 			if (Cube.z > Block->z-Block->size_z/2 && Cube.z < Block->z+Block->size_z/2) {
 				Cube.vel[1] = Cube.vel[1]>0 ? Cube.vel[1]:0;
-				if((floor_i+floor_j)%2) {
+				if(Block->type == UNSTABLE) {
 					if(Block->y > -7)
 						Block->y -= 0.1;
 					else
@@ -154,7 +255,6 @@ void moveCube(float x, float z)
 		Wall* NextCube = &Floor[floor_i][floor_j-1];
 		if ( (Cube.y-Cube.size_y/2+0.1) <= (NextCube->y+NextCube->size_y/2) &&
 			 (Cube.y+Cube.size_y/2) >= (NextCube->y-NextCube->size_y/2) ) { // Check no y overlap
-			cout<<Cube.z+Cube.size_z/2+0.01<<":"<<(NextCube->z-NextCube->size_z/2)<<endl;
 			if ( (Cube.z+Cube.size_z/2+0.01) < (NextCube->z-NextCube->size_z/2) )
 				Cube.z += 0.1;
 		}
@@ -387,124 +487,47 @@ void createChar ()
 	Cube.sprite = create3DObject(GL_TRIANGLES, 45, g_vertex_buffer_data, g_color_buffer_data, GL_FILL);
 }
 
+void applyFlEff ()
+{
+	for(int i=0; i<FLOOR_LENGTH; i++)
+		for(int j=0; j<FLOOR_LENGTH; j++) {
+
+			// Unstable floors
+			if(i!=0 && i!= 19 && j!=0 && j!=19 && rand()%2) {
+				Floor[i][j].type = UNSTABLE;
+				for(int k=0; k<36*3; k++)
+					Floor[i][j].g_color_buffer_data[k] /= 1.7;
+			}
+
+			// Dead blocks
+			if(i!=0 && i!= 19 && j!=0 && j!=19 && rand()%2) {
+				Floor[i][j].x = 200*i;
+				Floor[i][j].z = -200*j;
+				Floor[i][j].type = DEAD;
+			}
+
+		}
+}
+
 void createFloor ()
 {
-
-	static const GLfloat g_vertex_buffer_data[] = {
-		-1.0f,-0.6f,-1.0f, // triangle 1 : begin
-		-1.0f,-1.0f, 1.0f,
-		-1.0f, 1.0f, 1.0f, // triangle 1 : end
-
-		-1.0f,-0.6f,-1.0f,
-		-1.0f, 1.0f, 1.0f,
-		-1.0f, 1.0f,-1.0f,
-
-		1.0f, 1.0f,-1.0f, // triangle 2 : begin
-		-1.0f,-0.6f,-1.0f,
-		-1.0f, 1.0f,-1.0f, // triangle 2 : end
-
-		1.0f,-0.6f, 1.0f,
-		-1.0f,-0.6f,-1.0f,
-		1.0f,-0.6f,-1.0f,
-
-		1.0f, 1.0f,-1.0f,
-		1.0f,-0.6f,-1.0f,
-		-1.0f,-0.6f,-1.0f,
-
-		1.0f,-0.6f, 1.0f,
-		-1.0f,-0.6f, 1.0f,
-		-1.0f,-0.6f,-1.0f,
-
-		-1.0f, 1.0f, 1.0f,
-		-1.0f,-0.6f, 1.0f,
-		1.0f,-0.6f, 1.0f,
-
-		1.0f, 1.0f, 1.0f,
-		1.0f,-0.6f,-1.0f,
-		1.0f, 1.0f,-1.0f,
-
-		1.0f,-0.6f,-1.0f,
-		1.0f, 1.0f, 1.0f,
-		1.0f,-1.0f, 1.0f,
-
-		1.0f, 1.0f, 1.0f,
-		1.0f, 1.0f,-1.0f,
-		-1.0f, 1.0f,-1.0f,
-
-		1.0f, 1.0f, 1.0f,
-		-1.0f, 1.0f,-1.0f,
-		-1.0f, 1.0f, 1.0f,
-
-		1.0f, 1.0f, 1.0f,
-		-1.0f, 1.0f, 1.0f,
-		1.0f,-0.6f, 1.0f
-	};
-
-	static const GLfloat g_color_buffer_data[] = {
-		0.4f, 0.4f, 0.4f, // triangle 1 : begin
-		0.1f, 0.1f, 0.1f,
-		0.4f, 0.4f, 0.4f, // triangle 1 : end
-
-		0.4f, 0.4f, 0.4f,
-		0.4f, 0.4f, 0.4f,
-		0.5f, 0.5f, 0.5f,
-
-		0.8f, 0.8f, 0.8f, // triangle 2 : begin
-		0.6f, 0.6f, 0.6f,
-		0.6f, 0.6f, 0.6f, // triangle 2 : end
-
-		0.2f, 0.2f, 0.2f,
-		0.2f, 0.2f, 0.2f,
-		0.3f, 0.3f, 0.3f,
-
-		0.8f, 0.8f, 0.8f,
-		0.6f, 0.6f, 0.6f,
-		0.6f, 0.6f, 0.6f,
-
-		0.2f, 0.2f, 0.2f,
-		0.1f, 0.1f, 0.1f,
-		0.2f, 0.2f, 0.2f,
-
-		0.3f, 0.3f, 0.3f,
-		0.1f, 0.1f, 0.1f,
-		0.2f, 0.2f, 0.2f,
-
-		0.6f, 0.6f, 0.6f,
-		0.6f, 0.6f, 0.6f,
-		0.8f, 0.8f, 0.8f,
-
-		0.6f, 0.6f, 0.6f,
-		0.6f, 0.6f, 0.6f,
-		0.5f, 0.5f, 0.5f,
-
-		0.6f, 0.6f, 0.6f,
-		0.7f, 0.7f, 0.7f,
-		0.6f, 0.6f, 0.6f,
-
-		0.6f, 0.6f, 0.6f,
-		0.6f, 0.6f, 0.6f,
-		0.5f, 0.5f, 0.5f,
-
-		0.3f, 0.3f, 0.3f,
-		0.3f, 0.3f, 0.3f,
-		0.2f, 0.2f, 0.2f
-	};
 	for(int i=0; i<FLOOR_LENGTH; i++)
 		for(int j=0; j<FLOOR_LENGTH; j++) {
 			Floor[i][j].size_x = 2;
 			Floor[i][j].size_y = 2;
 			Floor[i][j].size_z = 2;
-			if(i!=0 && i!= 19 && j!=0 && j!=19 && rand()%2) {
-				Floor[i][j].x = 200*i;
-				Floor[i][j].z = -200*j;
-			}
-			else {
-				Floor[i][j].x = 2*i;
-				Floor[i][j].z = -2*j;
-			}
+			Floor[i][j].x = 2*i;
+			Floor[i][j].z = -2*j;
+			Floor[i][j].type = STABLE;
 			Floor[i][j].y = -3;
-			Floor[i][j].sprite = create3DObject(GL_TRIANGLES, 36, g_vertex_buffer_data, g_color_buffer_data, GL_FILL);
 		}
+
+	applyFlEff();
+
+	for(int i=0; i<FLOOR_LENGTH; i++)
+		for(int j=0; j<FLOOR_LENGTH; j++)
+			Floor[i][j].sprite = create3DObject(GL_TRIANGLES, 36, Floor[i][j].g_vertex_buffer_data, Floor[i][j].g_color_buffer_data, GL_FILL);
+
 }
 
 float camera_rotation_angle = 90;
@@ -682,14 +705,16 @@ void set_cam()
 {
 	switch(Eye.camera_type) {
 	case ADVENTURE:
-		Eye.x = Cube.x;
-		Eye.y = Cube.y + 2;
+		Eye.zoom = 0.6;
+		Eye.x = Cube.x+0.6;
+		Eye.y = Cube.y;
 		Eye.z = Cube.z;
-		Eye.LookAt_x = Cube.x+5;
-		Eye.LookAt_y = Cube.y+1;
+		Eye.LookAt_x = Cube.x+1;
+		Eye.LookAt_y = Cube.y-0.05;
 		Eye.LookAt_z = Cube.z;
 		break;
 	case TOWER:
+		Eye.zoom = 4;
 		Eye.x = Cube.x;
 		Eye.y = Cube.y+3;
 		Eye.z = Cube.z+3;
@@ -698,6 +723,7 @@ void set_cam()
 		Eye.LookAt_z = Cube.z;
 		break;
 	case TOP:
+		Eye.zoom = 4;
 		Eye.x = Cube.x;
 		Eye.y = Cube.y+3;
 		Eye.z = Cube.z+0.0001;
