@@ -180,15 +180,16 @@ void VertColl(float x, float z) {
 
 	Wall* Block = &Floor[floor_i][floor_j];
 	if ( (Cube.y-Cube.size_y/2) <= (Block->y+Block->size_y/2) &&
-		 (Cube.y+Cube.size_y/2) >= (Block->y-Block->size_y/2) )
-		if (Cube.x > Block->x-Block->size_x/2 && Cube.x<Block->x+Block->size_x/2)
-			if (Cube.z > Block->z-Block->size_z/2 && Cube.z < Block->z+Block->size_z/2) {
-				Cube.vel[1] = Cube.vel[1]>0 ? Cube.vel[1]:0;
-				if (Block->type == UNSTABLE) {
-					if (Block->y > -7)
-						Block->y -= 0.1;
-					else
-						Block->y += 110;
+		 (Cube.y+Cube.size_y/2) >= (Block->y-Block->size_y/2) ) // Y collision
+		if (Cube.x > Block->x-Block->size_x/2 && Cube.x<Block->x+Block->size_x/2) // X collision
+			if (Cube.z > Block->z-Block->size_z/2 && Cube.z < Block->z+Block->size_z/2) // Z collision
+				if (Block->type != DEAD) {
+					Cube.vel[1] = Cube.vel[1]>0 ? Cube.vel[1]:0;
+					if (Block->type == UNSTABLE) {
+						if (Block->y > -7)
+							Block->y -= 0.1;
+						else
+							Block->y += 110;
 				}
 			}
 }
@@ -205,72 +206,80 @@ void gravity() {
 	Cube.checkDie();
 }
 
-void moveCube(float x, float z)
+bool moveCube(float x, float z)
 {
 	pair<int, int> floor_pair = getFloorSquare(Cube.x, Cube.z);
 	int floor_i = floor_pair.first;
 	int floor_j = floor_pair.second;
 
 	if(x>0) {
-		if(floor_i == -1 || floor_i == 20) {
-			Cube.x += 0.1;
-			return;
-		}
+		if(floor_i == -1 || floor_i == 19)
+			return true;
+
 		Wall* NextCube = &Floor[floor_i+1][floor_j];
+		if (NextCube->type == DEAD)
+			return true;
+
 		if ( (Cube.y-Cube.size_y/2+0.1) <= (NextCube->y+NextCube->size_y/2) &&
 			 (Cube.y+Cube.size_y/2) >= (NextCube->y-NextCube->size_y/2) ) { // Check no y overlap
+			 // If y overlap then no x overlap allowed
 			if ( (Cube.x+Cube.size_x/2+0.01) < (NextCube->x-NextCube->size_x/2) )
-				Cube.x += 0.1;
+				return true;
 		}
 		else
-			Cube.x += 0.1;
+			return true;
 	}
 
 	else if(x<0) {
-		if(floor_i == -1 || floor_i == 0) {
-			Cube.x -= 0.1;
-			return;
-		}
+		if(floor_i == -1 || floor_i == 0)
+			return true;
+
 		Wall* NextCube = &Floor[floor_i-1][floor_j];
+		if (NextCube->type == DEAD)
+			return true;
+
 		if ( (Cube.y-Cube.size_y/2+0.1) <= (NextCube->y+NextCube->size_y/2) &&
 			 (Cube.y+Cube.size_y/2) >= (NextCube->y-NextCube->size_y/2) ) { // Check no y overlap
 			if ( (Cube.x-Cube.size_x/2-0.01) > (NextCube->x+NextCube->size_x/2) )
-				Cube.x -= 0.1;
+				return true;
 		}
 		else
-			Cube.x -= 0.1;
+			return true;
 	}
 
 	else if(z<0) {
-		if(floor_j == -1 || floor_j == 20) {
-			Cube.z -= 0.1;
-			return;
-		}
+		if(floor_j == -1 || floor_j == 19)
+			return true;
 		Wall* NextCube = &Floor[floor_i][floor_j+1];
-		if ( (Cube.y-Cube.size_y/2+0.1) <= (NextCube->y+NextCube->size_y/2) &&
+		if (NextCube->type == DEAD)
+			return true;
+
+			if ( (Cube.y-Cube.size_y/2+0.1) <= (NextCube->y+NextCube->size_y/2) &&
 			 (Cube.y+Cube.size_y/2) >= (NextCube->y-NextCube->size_y/2) ) { // Check no y overlap
 			if ( (Cube.z-Cube.size_z/2-0.01) > (NextCube->z+NextCube->size_z/2) )
-				Cube.z -= 0.1;
+				return true;
 		}
 		else
-			Cube.z -= 0.1;
+			return true;
 	}
 
 	else if(z>0) {
-		if(floor_j == -1 || floor_j == 0) {
-			Cube.z += 0.1;
-			return;
-		}
+		if(floor_j == -1 || floor_j == 0)
+			return true;
+
 		Wall* NextCube = &Floor[floor_i][floor_j-1];
+		if (NextCube->type == DEAD)
+			return true;
+
 		if ( (Cube.y-Cube.size_y/2+0.1) <= (NextCube->y+NextCube->size_y/2) &&
 			 (Cube.y+Cube.size_y/2) >= (NextCube->y-NextCube->size_y/2) ) { // Check no y overlap
 			if ( (Cube.z+Cube.size_z/2+0.01) < (NextCube->z-NextCube->size_z/2) )
-				Cube.z += 0.1;
+				return true;
 		}
 		else
-			Cube.z += 0.1;
+			return true;
 	}
-
+	return false;
 }
 
 /* Executed when a regular key is pressed/released/held-down */
@@ -333,16 +342,20 @@ void keyboardChar (GLFWwindow* window, unsigned int key)
 		Eye.pan-=0.5;
 		break;
 	case 'w':
-		moveCube(0, -0.1);
+		if (moveCube(0, -0.1))
+			Cube.z -= 0.1;
 		break;
 	case 's':
-		moveCube(0, 0.1);
+		if (moveCube(0, 0.1))
+			Cube.z += 0.1;
 		break;
 	case 'a':
-		moveCube(-0.1, 0);
+		if (moveCube(-0.1, 0))
+			Cube.x -= 0.1;
 		break;
 	case 'd':
-		moveCube(0.1, 0);
+		if (moveCube(0.1, 0))
+			Cube.x += 0.1;
 		break;
 
 	case '1':
@@ -510,8 +523,6 @@ void applyFlEff ()
 
 			// Dead blocks
 			if(i!=0 && i!= 19 && j!=0 && j!=19 && rand()%2) {
-				Floor[i][j].x = 200*i;
-				Floor[i][j].z = -200*j;
 				Floor[i][j].type = DEAD;
 			}
 
@@ -586,7 +597,8 @@ void draw ()
 		for(int j=0; j<FLOOR_LENGTH; j++) {
 			MVP = VP * glm::translate (glm::vec3(Floor[i][j].x, Floor[i][j].y, Floor[i][j].z));
 			glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
-			draw3DObject(Floor[i][j].sprite);
+			if (Floor[i][j].type != DEAD)
+				draw3DObject(Floor[i][j].sprite);
 		}
 
 	MVP = VP * glm::translate (glm::vec3(Cube.x, Cube.y, Cube.z));
