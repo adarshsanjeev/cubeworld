@@ -17,7 +17,8 @@
 using namespace std;
 
 enum camera_type {ADVENTURE, FOLLOW, TOWER, TOP, HELI};
-enum block_type {STABLE, DEAD, UNSTABLE};
+enum block_type {STABLE, DEAD, CRUMBLING, HOVERING, PLATFORM};
+enum compass {UP=0, DOWN=1, LEFT=2, RIGHT=3};
 
 void createChar();
 
@@ -27,12 +28,14 @@ public:
 	float x, y, z;
 	float LookAt_x, LookAt_y, LookAt_z;
 	float zoom, pan;
+	float angle;
 	camera_type camera_type;
 	Camera () {
 		camera_type = TOWER;
 		x = 0;
 		y = 3;
 		z = 3;
+		angle = 90;
 		LookAt_x = 0;
 		LookAt_y = -2.5;
 		LookAt_z = 0;
@@ -59,10 +62,11 @@ public:
 	float x, y, z;
 	float size_x, size_y, size_z;
 	block_type type;
+	int direction;
 
 	GLfloat g_vertex_buffer_data[36*3]= {
 		-1.0f,-0.6f,-1.0f, // triangle 1 : begin
-		-1.0f,-1.0f, 1.0f,
+		-1.0f,-0.6f, 1.0f,
 		-1.0f, 1.0f, 1.0f, // triangle 1 : end
 
 		-1.0f,-0.6f,-1.0f,
@@ -95,7 +99,7 @@ public:
 
 		1.0f,-0.6f,-1.0f,
 		1.0f, 1.0f, 1.0f,
-		1.0f,-1.0f, 1.0f,
+		1.0f,-0.6f, 1.0f,
 
 		1.0f, 1.0f, 1.0f,
 		1.0f, 1.0f,-1.0f,
@@ -171,6 +175,15 @@ pair<int, int> getFloorSquare(float x, float z)
 		return make_pair((int)(x+1)/2, (int)(z+1)/2);
 }
 
+Wall* getFloorPointer(float x, float z)
+{
+	z*=-1;
+	if (x<-1.5 || x>39.5 || z<-1.5 || z>39.5)
+		return NULL;
+	else
+		return &Floor[(int)(x+1)/2][(int)(z+1)/2];
+}
+
 void VertColl(float x, float z) {
 	pair<int, int> floor_pair = getFloorSquare(x, z);
 	int floor_i = floor_pair.first;
@@ -186,7 +199,8 @@ void VertColl(float x, float z) {
 			if (Cube.z > Block->z-Block->size_z/2 && Cube.z < Block->z+Block->size_z/2) // Z collision
 				if (Block->type != DEAD) {
 					Cube.vel[1] = Cube.vel[1]>0 ? Cube.vel[1]:0;
-					if (Block->type == UNSTABLE) {
+					Cube.y +=  (Block->y+Block->size_y/2) - (Cube.y-Cube.size_y/2);
+					if (Block->type == CRUMBLING) {
 						if (Block->y > -7)
 							Block->y -= 0.1;
 						else
@@ -217,6 +231,52 @@ bool moveShadow() {
 
 void gravity() {
 	Cube.vel += glm::vec3(0.0f, -0.0009f, 0.0f);
+
+	for(int i=0; i<FLOOR_LENGTH; i++)
+		for(int j=0; j<FLOOR_LENGTH; j++)
+			if (Floor[i][j].type == HOVERING) {
+				if (Floor[i][j].y > 0 || Floor[i][j].y < -6)
+					Floor[i][j].direction *= -1;
+				Floor[i][j].y += 0.01 * Floor[i][j].direction;
+		}
+
+	// for(int i=0; i<FLOOR_LENGTH; i++)
+	// 	for(int j=0; j<FLOOR_LENGTH; j++)
+	// 		if (Floor[i][j].type == PLATFORM) {
+	// 			pair<int, int> floor_pair = getFloorSquare(Floor[i][j].x+0.99, Floor[i][j].z-0.99);
+	// 			int floor_i = floor_pair.first;
+	// 			int floor_j = floor_pair.second;
+	// 			switch(Floor[i][j].direction) {
+	// 			case UP:
+	// 				if ( Floor[floor_i][floor_j+1].type == DEAD ||
+	// 					 Floor[floor_i][floor_j+1].type == PLATFORM )
+	// 					Floor[i][j].z -= 0.01;
+	// 				else
+	// 					Floor[i][j].direction = rand()%4;
+	// 				break;
+	// 			case DOWN:
+	// 				if ( Floor[floor_i][floor_j-1].type == DEAD ||
+	// 					 Floor[floor_i][floor_j-1].type == PLATFORM )
+	// 					Floor[i][j].z += 0.01;
+	// 				else
+	// 					Floor[i][j].direction = rand()%4;
+	// 				break;
+	// 			case LEFT:
+	// 				if ( Floor[floor_i-1][floor_j].type == DEAD ||
+	// 					 Floor[floor_i-1][floor_j].type == PLATFORM )
+	// 					Floor[i][j].x -= 0.01;
+	// 				else
+	// 					Floor[i][j].direction = rand()%4;
+	// 				break;
+	// 			case RIGHT:
+	// 				if ( Floor[floor_i+1][floor_j].type == DEAD ||
+	// 					 Floor[floor_i+1][floor_j].type == PLATFORM )
+	// 					Floor[i][j].x += 0.01;
+	// 				else
+	// 					Floor[i][j].direction = rand()%4;
+	// 				break;
+	// 			}
+	// 	}
 
 	// Vertical collision
 	VertColl(Cube.x, Cube.z);
@@ -324,16 +384,16 @@ void keyboard (GLFWwindow* window, int key, int scancode, int action, int mods)
 	else if (action == GLFW_REPEAT) {
 		switch (key) {
 		case GLFW_KEY_UP:
-			Eye.y += 1;
+			Eye.y += 0.5;
 			break;
 		case GLFW_KEY_DOWN:
-			Eye.y -= 1;
+			Eye.y -= 0.5;
 			break;
 		case GLFW_KEY_LEFT:
-			Eye.x -=1;
+			Eye.angle += 5;
 			break;
 		case GLFW_KEY_RIGHT:
-			Eye.x += 1;
+			Eye.angle -= 5;
 			break;
 		}
 	}
@@ -393,6 +453,7 @@ void keyboardChar (GLFWwindow* window, unsigned int key)
 		break;
 	case '5':
 		Eye.camera_type = HELI;
+		Eye.zoom = 4;
 		break;
 	}
 }
@@ -562,16 +623,40 @@ void applyFlEff ()
 	for(int i=0; i<FLOOR_LENGTH; i++)
 		for(int j=0; j<FLOOR_LENGTH; j++) {
 
-			// Unstable floors
-			if(i!=0 && i!= 19 && j!=0 && j!=19 && rand()%2) {
-				Floor[i][j].type = UNSTABLE;
-				for(int k=0; k<36*3; k++)
-					Floor[i][j].g_color_buffer_data[k] /= 1.7;
-			}
-
 			// Dead blocks
 			if(i!=0 && i!= 19 && j!=0 && j!=19 && rand()%2) {
 				Floor[i][j].type = DEAD;
+				continue;
+			}
+
+			// // Platforms floors
+			// if(i!=0 && i!= 19 && j!=0 && j!=19 && rand()%2) {
+			// 	Floor[i][j].type = PLATFORM;
+			// 	Floor[i][j].direction = rand()%4;
+			// 	for(int k=0; k<36*3; k++)
+			// 		if((k-1)%3)
+			// 			Floor[i][j].g_color_buffer_data[k] /= 1.7;
+			// 	continue;
+			// }
+
+			// Crumbling floors
+			if(i!=0 && i!= 19 && j!=0 && j!=19 && rand()%2) {
+				Floor[i][j].type = CRUMBLING;
+				for(int k=0; k<36*3; k++)
+						Floor[i][j].g_color_buffer_data[k] /= 1.7;
+				continue;
+			}
+
+			// Hovering floors
+			if(i!=0 && i!= 19 && j!=0 && j!=19 && rand()%2) {
+				Floor[i][j].type = HOVERING;
+				Floor[i][j].y = (rand()%3)*2-6;
+				Floor[i][j].direction = -1;
+				for(int k=0; k<36*3; k++) {
+					if(k%3)
+						Floor[i][j].g_color_buffer_data[k] = 0;
+				}
+				continue;
 			}
 
 		}
@@ -785,7 +870,7 @@ void set_cam()
 		Eye.y = Cube.y;
 		Eye.z = Cube.z;
 		Eye.LookAt_x = Cube.x+1;
-		Eye.LookAt_y = Cube.y-0.05;
+		Eye.LookAt_y = Cube.y-0.04;
 		Eye.LookAt_z = Cube.z;
 		break;
 	case TOWER:
@@ -809,6 +894,10 @@ void set_cam()
 	case FOLLOW:
 		break;
 	case HELI:
+		Eye.x = Cube.x + 5*cos(Eye.angle*M_PI/180.0f);
+		Eye.z = Cube.z + 5*sin(Eye.angle*M_PI/180.0f);
+		Eye.LookAt_x = Cube.x;
+		Eye.LookAt_z = Cube.z;
 		break;
 	}
 }
