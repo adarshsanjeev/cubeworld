@@ -22,6 +22,15 @@ enum compass {UP=0, DOWN=1, LEFT=2, RIGHT=3};
 
 void createChar();
 
+class mouseHold
+{
+public:
+	float x, y;
+	float angle;
+	float held_x, held_y;
+	bool MOUSE_HELD;
+}Mouse;
+
 class Camera
 {
 public:
@@ -463,14 +472,15 @@ void mouseButton (GLFWwindow* window, int button, int action, int mods)
 {
 	switch (button) {
 	case GLFW_MOUSE_BUTTON_LEFT:
-		if (action == GLFW_RELEASE)
-			break;
-	case GLFW_MOUSE_BUTTON_RIGHT:
-		if (action == GLFW_RELEASE) {
+		if (action == GLFW_PRESS) {
+			Mouse.MOUSE_HELD = true;
+			Mouse.held_x = Mouse.x;
+			Mouse.held_y = Mouse.y;
+			Mouse.angle = Eye.angle;
 		}
-		break;
-	default:
-		break;
+		if (action == GLFW_RELEASE) {
+			Mouse.MOUSE_HELD = false;
+		}
 	}
 }
 
@@ -766,11 +776,11 @@ void draw ()
 void scrollFunc(GLFWwindow *window, double xpos, double ypos)
 {
 	if(ypos == 1) {
-		Eye.zoom -= 0.5;
+		Eye.zoom -= 0.25;
 		Eye.zoom = max(0.5f, Eye.zoom);
 	}
 	else {
-		Eye.zoom += 0.5;
+		Eye.zoom += 0.25;
 		Eye.zoom = min(6.5f, Eye.zoom);
 	}
 }
@@ -801,6 +811,7 @@ GLFWwindow* initGLFW (int width, int height)
 	glfwMakeContextCurrent(window);
 	gladLoadGLLoader((GLADloadproc) glfwGetProcAddress);
 	glfwSwapInterval( 1 );
+	glfwSetInputMode(window, GLFW_STICKY_MOUSE_BUTTONS, 1);
 
 	/* --- register callbacks with GLFW --- */
 
@@ -856,6 +867,8 @@ void initGL (GLFWwindow* window, int width, int height)
 
 void cursor_position_callback(GLFWwindow* window, double xpos, double ypos)
 {
+	Mouse.x = xpos;
+	Mouse.y = ypos;
 }
 
 // x=1,y=2,z=-1;
@@ -902,6 +915,16 @@ void set_cam()
 	}
 }
 
+void mouse_drag()
+{
+	int x_dist = Mouse.x - Mouse.held_x;
+	int y_dist = Mouse.y - Mouse.held_y;
+	Eye.angle = Mouse.angle + x_dist/2;
+	Eye.y += y_dist/50;
+	Eye.x = Cube.x + 5*cos(Eye.angle*M_PI/180.0f);
+	Eye.z = Cube.z + 5*sin(Eye.angle*M_PI/180.0f);
+}
+
 int main (int argc, char** argv)
 {
 	int width = 1400;
@@ -927,6 +950,10 @@ int main (int argc, char** argv)
 		gravity();
 
 		set_cam();
+		if (Mouse.MOUSE_HELD)
+			mouse_drag();
+		Eye.y = Eye.y>15 ? 15:Eye.y;
+		Eye.y = Eye.y<-15 ? -15:Eye.y;
 
 		// OpenGL Draw commands
 		draw();
