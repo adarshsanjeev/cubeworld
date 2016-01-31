@@ -40,7 +40,7 @@ public:
 	float angle;
 	camera_type camera_type;
 	Camera () {
-		camera_type = TOWER;
+		camera_type = HELI;
 		x = 0;
 		y = 3;
 		z = 3;
@@ -513,128 +513,14 @@ void reshapeWindow (GLFWwindow* window, int width, int height)
 	// Matrices.projection = glm::ortho(-4.0f, 4.0f, -4.0f, 4.0f, 0.1f, 500.0f);
 }
 
-void createChar ()
-{
-	GLfloat g_vertex_buffer_data[] = {
-		-0.5f,-0.5f,-0.5f, // triangle 1 : begin
-		-0.5f,-0.5f, 0.5f,
-		-0.5f, 0.5f, 0.5f, // triangle 1 : end
-		0.5f, 0.5f,-0.5f, // triangle 2 : begin
-		-0.5f,-0.5f,-0.5f,
-		-0.5f, 0.5f,-0.5f, // triangle 2 : end
-		0.5f,-0.5f, 0.5f,
-		-0.5f,-0.5f,-0.5f,
-		0.5f,-0.5f,-0.5f,
-		0.5f, 0.5f,-0.5f,
-		0.5f,-0.5f,-0.5f,
-		-0.5f,-0.5f,-0.5f,
-		-0.5f,-0.5f,-0.5f,
-		-0.5f, 0.5f, 0.5f,
-		-0.5f, 0.5f,-0.5f,
-		0.5f,-0.5f, 0.5f,
-		-0.5f,-0.5f, 0.5f,
-		-0.5f,-0.5f,-0.5f,
-		-0.5f, 0.5f, 0.5f,
-		-0.5f,-0.5f, 0.5f,
-		0.5f,-0.5f, 0.5f,
-		0.5f, 0.5f, 0.5f,
-		0.5f,-0.5f,-0.5f,
-		0.5f, 0.5f,-0.5f,
-		0.5f,-0.5f,-0.5f,
-		0.5f, 0.5f, 0.5f,
-		0.5f,-0.5f, 0.5f,
-		0.5f, 0.5f, 0.5f,
-		0.5f, 0.5f,-0.5f,
-		-0.5f, 0.5f,-0.5f,
-		0.5f, 0.5f, 0.5f,
-		-0.5f, 0.5f,-0.5f,
-		-0.5f, 0.5f, 0.5f,
-		0.5f, 0.5f, 0.5f,
-		-0.5f, 0.5f, 0.5f,
-		0.5f,-0.5f, 0.5f
-	};
-	GLfloat g_color_buffer_data[] = {
-		0.0f, 0.0f, 0.0f, // triangle 1 : begin
-		0.0f, 0.0f, 0.0f,
-		0.0f, 0.0f, 0.0f, // triangle 1 : end
-		1.0f, 1.0f, 1.0f, // triangle 2 : begin
-		1.0f, 1.0f, 1.0f,
-		1.0f, 1.0f, 1.0f, // triangle 2 : end
-		1.0f, 1.0f, 1.0f,
-		1.0f, 1.0f, 1.0f,
-		1.0f, 1.0f, 1.0f,
-		1.0f, 1.0f, 1.0f,
-		1.0f,1.0f,1.0f,
-		1.0f,1.0f,1.0f,
-		1.0f,1.0f,1.0f,
-		1.0f, 1.0f, 1.0f,
-		1.0f, 1.0f,1.0f,
-		1.0f,1.0f, 1.0f,
-		1.0f,1.0f, 1.0f,
-		1.0f,1.0f,1.0f,
-		1.0f, 0.0f, 0.0f,
-		1.0f,1.0f, 1.0f,
-		1.0f,0.0f, 1.0f,
-		1.0f, 1.0f, 1.0f,
-		1.0f,1.0f,1.0f,
-		1.0f, 0.0f, 0.0f,
-		1.0f,1.0f,1.0f,
-		1.0f, 1.0f, 1.0f,
-		1.0f,1.0f, 1.0f,
-		1.0f, 1.0f,1.0f,
-		1.0f, 1.0f,0.0f,
-		1.0f, 1.0f,1.0f,
-		1.0f,1.0f, 1.0f,
-		1.0f, 1.0f,1.0f,
-		1.0f, 0.0f, 1.0f,
-		1.0f, 0.0f, 0.0f,
-		1.0f, 1.0f, 1.0f,
-		1.0f,1.0f, 1.0f
-	};
-	Cube.vel = glm::vec3(0, 0, 0);
-	Cube.size_x = 1;
-	Cube.size_y = 1;
-	Cube.size_z = 1;
-	Cube.scale = 1.0f;
-	Cube.x = 0;
-	Cube.y = -1;
-	Cube.z = 0;
-	Cube.sprite = create3DObject(GL_TRIANGLES, 36, g_vertex_buffer_data, g_color_buffer_data, GL_FILL);
-
-	GLfloat shadow_vertex_buffer_data[] = {
-		0.5f, 0.0f,-0.5f,
-	   -0.5f, 0.0f,-0.5f,
-		0.5f, 0.0f, 0.5f,
-		0.5f, 0.0f, 0.5f,
-	   -0.5f, 0.0f, 0.5f,
-	   -0.5f, 0.0f,-0.5f,
-	};
-	GLfloat shadow_color_buffer_data[] = {
-		0.25f, 0.25f, 0.25f,
-		0.25f, 0.25f, 0.25f,
-		0.25f, 0.25f, 0.25f,
-		0.25f, 0.25f, 0.25f,
-		0.25f, 0.25f, 0.25f,
-		0.25f, 0.25f, 0.25f,
-	};
-
-	Shadow.size_x = 0.25;
-	Shadow.size_y = 0.25;
-	Shadow.size_z = 0.1;
-	Shadow.scale = 1.0f;
-	Shadow.x = Cube.x;
-	Shadow.y = -2;
-	Shadow.z = Cube.y;
-	Shadow.sprite = create3DObject(GL_TRIANGLES, 36, shadow_vertex_buffer_data, shadow_color_buffer_data, GL_FILL);
-}
-
 void applyFlEff ()
 {
 	for(int i=0; i<FLOOR_LENGTH; i++)
 		for(int j=0; j<FLOOR_LENGTH; j++) {
-
+			if((i==0 && j==0) || (i==19&&j==19))
+				continue;
 			// Dead blocks
-			if(i!=0 && i!= 19 && j!=0 && j!=19 && rand()%2) {
+			if(rand()%2) {
 				Floor[i][j].type = DEAD;
 				continue;
 			}
@@ -650,7 +536,7 @@ void applyFlEff ()
 			// }
 
 			// Crumbling floors
-			if(i!=0 && i!= 19 && j!=0 && j!=19 && rand()%2) {
+			if(rand()%2) {
 				Floor[i][j].type = CRUMBLING;
 				for(int k=0; k<36*3; k++)
 						Floor[i][j].g_color_buffer_data[k] /= 1.7;
@@ -658,7 +544,7 @@ void applyFlEff ()
 			}
 
 			// Hovering floors
-			if(i!=0 && i!= 19 && j!=0 && j!=19 && rand()%2) {
+			if(rand()%2) {
 				Floor[i][j].type = HOVERING;
 				Floor[i][j].y = (rand()%3)*2-6;
 				Floor[i][j].direction = -1;
@@ -969,4 +855,233 @@ int main (int argc, char** argv)
 
 	glfwTerminate();
 	exit(EXIT_SUCCESS);
+}
+
+void createChar ()
+{
+	GLfloat g_vertex_buffer_data[] = {
+		// TREADS
+		-0.5f,-0.5f,-0.5f,
+		-0.3f,-0.5f,-0.5f,
+		-0.5f, 0.0f, 0.0f,
+		-0.3f, 0.0f, 0.0f,
+		-0.5f, 0.0f, 0.0f,
+		-0.3f,-0.5f,-0.5f,
+		-0.5f,-0.5f, 0.5f,
+		-0.3f,-0.5f, 0.5f,
+		-0.5f, 0.0f, 0.0f,
+		-0.3f, 0.0f, 0.0f,
+		-0.5f, 0.0f, 0.0f,
+		-0.3f,-0.5f, 0.5f,
+		-0.5f,-0.45f,-0.5f,
+		-0.5f,-0.45f, 0.5f,
+		-0.3f,-0.45f,-0.5f,
+		-0.3f,-0.45f,-0.5f,
+		-0.5f,-0.45f, 0.5f,
+		-0.3f,-0.45f, 0.5f,
+		 0.5f,-0.5f,-0.5f,
+		 0.3f,-0.5f,-0.5f,
+		 0.5f, 0.0f, 0.0f,
+		 0.3f, 0.0f, 0.0f,
+		 0.5f, 0.0f, 0.0f,
+		 0.3f,-0.5f,-0.5f,
+		 0.5f,-0.5f, 0.5f,
+		 0.3f,-0.5f, 0.5f,
+		 0.5f, 0.0f, 0.0f,
+		 0.3f, 0.0f, 0.0f,
+		 0.5f, 0.0f, 0.0f,
+		 0.3f,-0.5f, 0.5f,
+		 0.5f,-0.45f,-0.5f,
+		 0.5f,-0.45f, 0.5f,
+		 0.3f,-0.45f,-0.5f,
+		 0.3f,-0.45f,-0.5f,
+		 0.5f,-0.45f, 0.5f,
+		 0.3f,-0.45f, 0.5f,
+
+		// Body
+		-0.3f,-0.3f,-0.3f,
+		-0.3f,-0.3f, 0.3f,
+		-0.3f, 0.3f, 0.3f,
+		-0.3f,-0.3f,-0.3f,
+		-0.3f, 0.3f, 0.3f,
+		-0.3f, 0.3f,-0.3f,
+		0.3f, 0.3f,-0.3f,
+		-0.3f,-0.3f,-0.3f,
+		-0.3f, 0.3f,-0.3f,
+		0.3f,-0.3f, 0.3f,
+		-0.3f,-0.3f,-0.3f,
+		0.3f,-0.3f,-0.3f,
+		0.3f, 0.3f,-0.3f,
+		0.3f,-0.3f,-0.3f,
+		-0.3f,-0.3f,-0.3f,
+		0.3f,-0.3f, 0.3f,
+		-0.3f,-0.3f, 0.3f,
+		-0.3f,-0.3f,-0.3f,
+		-0.3f, 0.3f, 0.3f,
+		-0.3f,-0.3f, 0.3f,
+		0.3f,-0.3f, 0.3f,
+		0.3f, 0.3f, 0.3f,
+		0.3f,-0.3f,-0.3f,
+		0.3f, 0.3f,-0.3f,
+		0.3f,-0.3f,-0.3f,
+		0.3f, 0.3f, 0.3f,
+		0.3f,-0.3f, 0.3f,
+		0.3f, 0.3f, 0.3f,
+		0.3f, 0.3f,-0.3f,
+		-0.3f, 0.3f,-0.3f,
+		0.3f, 0.3f, 0.3f,
+		-0.3f, 0.3f,-0.3f,
+		-0.3f, 0.3f, 0.3f,
+		0.3f, 0.3f, 0.3f,
+		-0.3f, 0.3f, 0.3f,
+		0.3f,-0.3f, 0.3f,
+	};
+
+	GLfloat g_color_buffer_data[] = {
+		0.2f, 0.2f, 0.2f, // triangle 1 : begin
+		0.2f, 0.2f, 0.2f,
+		0.2f, 0.2f, 0.2f, // triangle 1 : end
+		0.2f, 0.2f, 0.2f, // triangle 2 : begin
+		0.2f, 0.2f, 0.2f,
+		0.2f, 0.2f, 0.2f, // triangle 2 : end
+		0.2f, 0.2f, 0.2f,
+		0.2f, 0.2f, 0.2f,
+		0.2f, 0.2f, 0.2f,
+		0.2f, 0.2f, 0.2f,
+		0.2f, 0.2f, 0.2f,
+		0.2f, 0.2f, 0.2f,
+		0.2f, 0.2f, 0.2f,
+		0.2f, 0.2f, 0.2f,
+		0.2f, 0.2f, 0.2f,
+		0.2f, 0.2f, 0.2f,
+		0.2f, 0.2f, 0.2f,
+		0.2f, 0.2f, 0.2f,
+		0.2f, 0.2f, 0.2f,
+		0.2f, 0.2f, 0.2f,
+		0.2f, 0.2f, 0.2f,
+		0.2f, 0.2f, 0.2f,
+		0.2f, 0.2f, 0.2f,
+		0.2f, 0.2f, 0.2f,
+		0.2f, 0.2f, 0.2f,
+		0.2f, 0.2f, 0.2f,
+		0.2f, 0.2f, 0.2f,
+		0.2f, 0.2f, 0.2f,
+		0.2f, 0.2f, 0.2f,
+		0.2f, 0.2f, 0.2f,
+		0.2f, 0.2f, 0.2f,
+		0.2f, 0.2f, 0.2f,
+		0.2f, 0.2f, 0.2f,
+		0.2f, 0.2f, 0.2f,
+		0.2f, 0.2f, 0.2f,
+		0.2f, 0.2f, 0.2f,
+		1.0f, 0.7f, 0.0f,
+		1.0f, 0.7f, 0.0f,
+		1.0f, 0.7f, 0.0f,
+		1.0f, 0.7f, 0.0f,
+		1.0f, 0.7f, 0.0f,
+		1.0f, 0.7f, 0.0f,
+		1.0f, 0.7f, 0.0f,
+		1.0f, 0.7f, 0.0f,
+		1.0f, 0.7f, 0.0f,
+		1.0f, 0.7f, 0.0f,
+		1.0f, 0.7f, 0.0f,
+		1.0f, 0.7f, 0.0f,
+		1.0f, 0.7f, 0.0f,
+		1.0f, 0.7f, 0.0f,
+		1.0f, 0.7f, 0.0f,
+		1.0f, 0.7f, 0.0f,
+		1.0f, 0.7f, 0.0f,
+		1.0f, 0.7f, 0.0f,
+		1.0f, 0.7f, 0.0f,
+		1.0f, 0.7f, 0.0f,
+		1.0f, 0.7f, 0.0f,
+		1.0f, 0.7f, 0.0f,
+		1.0f, 0.7f, 0.0f,
+		1.0f, 0.7f, 0.0f,
+		1.0f, 0.7f, 0.0f,
+		1.0f, 0.7f, 0.0f,
+		1.0f, 0.7f, 0.0f,
+		1.0f, 0.7f, 0.0f,
+		1.0f, 0.7f, 0.0f,
+		1.0f, 0.7f, 0.0f,
+		1.0f, 0.7f, 0.0f,
+		1.0f, 0.7f, 0.0f,
+		1.0f, 0.7f, 0.0f,
+		1.0f, 0.7f, 0.0f,
+		1.0f, 0.7f, 0.0f,
+		1.0f, 0.7f, 0.0f,
+
+		1.0f, 0.7f, 0.0f,
+		1.0f, 0.7f, 0.0f,
+		1.0f, 0.7f, 0.0f,
+		1.0f, 0.7f, 0.0f,
+		1.0f, 0.7f, 0.0f,
+		1.0f, 0.7f, 0.0f,
+		1.0f, 0.7f, 0.0f,
+		1.0f, 0.7f, 0.0f,
+		1.0f, 0.7f, 0.0f,
+		1.0f, 0.7f, 0.0f,
+		1.0f, 0.7f, 0.0f,
+		1.0f, 0.7f, 0.0f,
+		1.0f, 0.7f, 0.0f,
+		1.0f, 0.7f, 0.0f,
+		1.0f, 0.7f, 0.0f,
+		1.0f, 0.7f, 0.0f,
+		1.0f, 0.7f, 0.0f,
+		1.0f, 0.7f, 0.0f,
+		1.0f, 0.7f, 0.0f,
+		1.0f, 0.7f, 0.0f,
+		1.0f, 0.7f, 0.0f,
+		1.0f, 0.7f, 0.0f,
+		1.0f, 0.7f, 0.0f,
+		1.0f, 0.7f, 0.0f,
+		1.0f, 0.7f, 0.0f,
+		1.0f, 0.7f, 0.0f,
+		1.0f, 0.7f, 0.0f,
+		1.0f, 0.7f, 0.0f,
+		1.0f, 0.7f, 0.0f,
+		1.0f, 0.7f, 0.0f,
+		1.0f, 0.7f, 0.0f,
+		1.0f, 0.7f, 0.0f,
+		1.0f, 0.7f, 0.0f,
+		1.0f, 0.7f, 0.0f,
+		1.0f, 0.7f, 0.0f,
+		1.0f, 0.7f, 0.0f,
+};
+
+	Cube.vel = glm::vec3(0, 0, 0);
+	Cube.size_x = 1;
+	Cube.size_y = 1;
+	Cube.size_z = 1;
+	Cube.scale = 1.0f;
+	Cube.x = 0;
+	Cube.y = -1;
+	Cube.z = 0;
+	Cube.sprite = create3DObject(GL_TRIANGLES, 72, g_vertex_buffer_data, g_color_buffer_data, GL_FILL);
+
+	GLfloat shadow_vertex_buffer_data[] = {
+		0.5f, 0.0f,-0.5f,
+	   -0.5f, 0.0f,-0.5f,
+		0.5f, 0.0f, 0.5f,
+		0.5f, 0.0f, 0.5f,
+	   -0.5f, 0.0f, 0.5f,
+	   -0.5f, 0.0f,-0.5f,
+	};
+	GLfloat shadow_color_buffer_data[] = {
+		0.25f, 0.25f, 0.25f,
+		0.25f, 0.25f, 0.25f,
+		0.25f, 0.25f, 0.25f,
+		0.25f, 0.25f, 0.25f,
+		0.25f, 0.25f, 0.25f,
+		0.25f, 0.25f, 0.25f,
+	};
+
+	Shadow.size_x = 0.25;
+	Shadow.size_y = 0.25;
+	Shadow.size_z = 0.1;
+	Shadow.scale = 1.0f;
+	Shadow.x = Cube.x;
+	Shadow.y = -2;
+	Shadow.z = Cube.y;
+	Shadow.sprite = create3DObject(GL_TRIANGLES, 36, shadow_vertex_buffer_data, shadow_color_buffer_data, GL_FILL);
 }
