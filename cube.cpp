@@ -45,13 +45,14 @@ public:
 	float x, y, z;
 	glm::vec3 vel;
 	float size_x, size_y, size_z;
+	float scale;
 	VAO *sprite;
 
 	void checkDie() {
 		if (y<-10)
 			createChar();
 	}
-} Cube;
+} Cube, Shadow;
 
 class Wall {
 public:
@@ -192,6 +193,26 @@ void VertColl(float x, float z) {
 							Block->y += 110;
 				}
 			}
+}
+
+bool moveShadow() {
+	pair<int, int> floor_pair = getFloorSquare(Cube.x, Cube.z);
+	int floor_i = floor_pair.first;
+	int floor_j = floor_pair.second;
+
+	if(floor_i == -1 || floor_j == -1)
+		return false;
+
+	Wall* Block = &Floor[floor_i][floor_j];
+
+	if (Block->type == DEAD)
+		return false;
+
+	Shadow.x = Cube.x;
+	Shadow.y = Block->y + Block->size_y/2+0.01;
+	Shadow.z = Cube.z;
+	Shadow.scale = 1/(0.6+Cube.y - Shadow.y);
+	return true;
 }
 
 void gravity() {
@@ -423,7 +444,7 @@ void reshapeWindow (GLFWwindow* window, int width, int height)
 
 void createChar ()
 {
-	static const GLfloat g_vertex_buffer_data[] = {
+	GLfloat g_vertex_buffer_data[] = {
 		-0.5f,-0.5f,-0.5f, // triangle 1 : begin
 		-0.5f,-0.5f, 0.5f,
 		-0.5f, 0.5f, 0.5f, // triangle 1 : end
@@ -461,7 +482,7 @@ void createChar ()
 		-0.5f, 0.5f, 0.5f,
 		0.5f,-0.5f, 0.5f
 	};
-	static const GLfloat g_color_buffer_data[] = {
+	GLfloat g_color_buffer_data[] = {
 		0.0f, 0.0f, 0.0f, // triangle 1 : begin
 		0.0f, 0.0f, 0.0f,
 		0.0f, 0.0f, 0.0f, // triangle 1 : end
@@ -503,10 +524,37 @@ void createChar ()
 	Cube.size_x = 1;
 	Cube.size_y = 1;
 	Cube.size_z = 1;
+	Cube.scale = 1.0f;
 	Cube.x = 0;
 	Cube.y = -1;
 	Cube.z = 0;
-	Cube.sprite = create3DObject(GL_TRIANGLES, 45, g_vertex_buffer_data, g_color_buffer_data, GL_FILL);
+	Cube.sprite = create3DObject(GL_TRIANGLES, 36, g_vertex_buffer_data, g_color_buffer_data, GL_FILL);
+
+	GLfloat shadow_vertex_buffer_data[] = {
+		0.5f, 0.0f,-0.5f,
+	   -0.5f, 0.0f,-0.5f,
+		0.5f, 0.0f, 0.5f,
+		0.5f, 0.0f, 0.5f,
+	   -0.5f, 0.0f, 0.5f,
+	   -0.5f, 0.0f,-0.5f,
+	};
+	GLfloat shadow_color_buffer_data[] = {
+		0.25f, 0.25f, 0.25f,
+		0.25f, 0.25f, 0.25f,
+		0.25f, 0.25f, 0.25f,
+		0.25f, 0.25f, 0.25f,
+		0.25f, 0.25f, 0.25f,
+		0.25f, 0.25f, 0.25f,
+	};
+
+	Shadow.size_x = 0.25;
+	Shadow.size_y = 0.25;
+	Shadow.size_z = 0.1;
+	Shadow.scale = 1.0f;
+	Shadow.x = Cube.x;
+	Shadow.y = -2;
+	Shadow.z = Cube.y;
+	Shadow.sprite = create3DObject(GL_TRIANGLES, 36, shadow_vertex_buffer_data, shadow_color_buffer_data, GL_FILL);
 }
 
 void applyFlEff ()
@@ -599,7 +647,13 @@ void draw ()
 			glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
 			if (Floor[i][j].type != DEAD)
 				draw3DObject(Floor[i][j].sprite);
-		}
+
+}
+	if (moveShadow()) {
+		MVP = VP * glm::translate (glm::vec3(Shadow.x, Shadow.y, Shadow.z)) * glm::scale(glm::vec3(Shadow.scale, 1.0f, Shadow.scale));
+		glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
+		draw3DObject(Shadow.sprite);
+	}
 
 	MVP = VP * glm::translate (glm::vec3(Cube.x, Cube.y, Cube.z));
 	glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
