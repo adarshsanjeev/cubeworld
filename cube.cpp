@@ -58,6 +58,7 @@ public:
 	glm::vec3 vel;
 	float size_x, size_y, size_z;
 	float scale;
+	float speed_mod;
 	VAO *sprite;
 
 	void checkDie() {
@@ -433,19 +434,19 @@ void keyboardChar (GLFWwindow* window, unsigned int key)
 		break;
 	case 'w':
 		if (moveCube(0, -0.1))
-			Cube.z -= 0.1;
+			Cube.z -= 0.1 * Cube.speed_mod;
 		break;
 	case 's':
 		if (moveCube(0, 0.1))
-			Cube.z += 0.1;
+			Cube.z += 0.1 * Cube.speed_mod;
 		break;
 	case 'a':
 		if (moveCube(-0.1, 0))
-			Cube.x -= 0.1;
+			Cube.x -= 0.1 * Cube.speed_mod;
 		break;
 	case 'd':
 		if (moveCube(0.1, 0))
-			Cube.x += 0.1;
+			Cube.x += 0.1 * Cube.speed_mod;
 		break;
 
 	case '1':
@@ -505,8 +506,6 @@ void reshapeWindow (GLFWwindow* window, int width, int height)
 	// Store the projection matrix in a variable for future use
 	// Perspective projection for 3D views
 	// Matrices.projection = glm::perspective (fov, (GLfloat) fbwidth / (GLfloat) fbheight, 0.1f, 500.0f);
-
-	Eye.pan = Eye.zoom;
 
 	// Ortho projection for 2D views
 	Matrices.projection = glm::ortho(Eye.zoom*-1.0f - Eye.pan, Eye.zoom + Eye.pan, Eye.zoom*-1.0f, Eye.zoom, 0.1f, 500.0f);
@@ -636,9 +635,11 @@ void draw ()
 		draw3DObject(Shadow.sprite);
 	}
 
-	MVP = VP * glm::translate (glm::vec3(Cube.x, Cube.y, Cube.z));
-	glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
-	draw3DObject(Cube.sprite);
+	if (Eye.camera_type != ADVENTURE) {
+		MVP = VP * glm::translate (glm::vec3(Cube.x, Cube.y, Cube.z));
+		glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
+		draw3DObject(Cube.sprite);
+	}
 
 	// Matrices.model = glm::mat4(1.0f);
 	// glm::mat4 translateBarrel = glm::translate (glm::vec3(Cannon.x, Cannon.y, 0));
@@ -765,17 +766,19 @@ void set_cam()
 	switch(Eye.camera_type) {
 	case ADVENTURE:
 		Eye.zoom = 0.6;
-		Eye.x = Cube.x+0.6;
-		Eye.y = Cube.y;
+		Eye.pan = Eye.zoom + 1.2;
+		Eye.x = Cube.x;
+		Eye.y = Cube.y + 0.5;
 		Eye.z = Cube.z;
 		Eye.LookAt_x = Cube.x+1;
-		Eye.LookAt_y = Cube.y-0.04;
+		Eye.LookAt_y = Cube.y+0.5-0.04;
 		Eye.LookAt_z = Cube.z;
 		break;
 	case TOWER:
 		Eye.zoom = 4;
 		Eye.x = Cube.x;
 		Eye.y = Cube.y+3;
+		Eye.pan = Eye.zoom;
 		Eye.z = Cube.z+3;
 		Eye.LookAt_x = Cube.x;
 		Eye.LookAt_y = Cube.y;
@@ -785,6 +788,7 @@ void set_cam()
 		Eye.zoom = 4;
 		Eye.x = Cube.x;
 		Eye.y = Cube.y+3;
+		Eye.pan = Eye.zoom;
 		Eye.z = Cube.z+0.0001;
 		Eye.LookAt_x = Cube.x;
 		Eye.LookAt_y = Cube.y;
@@ -795,6 +799,7 @@ void set_cam()
 	case HELI:
 		Eye.x = Cube.x + 5*cos(Eye.angle*M_PI/180.0f);
 		Eye.z = Cube.z + 5*sin(Eye.angle*M_PI/180.0f);
+		Eye.pan = Eye.zoom;
 		Eye.LookAt_x = Cube.x;
 		Eye.LookAt_z = Cube.z;
 		break;
@@ -806,7 +811,7 @@ void mouse_drag()
 	int x_dist = Mouse.x - Mouse.held_x;
 	int y_dist = Mouse.y - Mouse.held_y;
 	Eye.angle = Mouse.angle + x_dist/2;
-	Eye.y += y_dist/50;
+	Eye.y += y_dist/100;
 	Eye.x = Cube.x + 5*cos(Eye.angle*M_PI/180.0f);
 	Eye.z = Cube.z + 5*sin(Eye.angle*M_PI/180.0f);
 }
@@ -838,8 +843,8 @@ int main (int argc, char** argv)
 		set_cam();
 		if (Mouse.MOUSE_HELD)
 			mouse_drag();
-		Eye.y = Eye.y>15 ? 15:Eye.y;
-		Eye.y = Eye.y<-15 ? -15:Eye.y;
+		Eye.y = Eye.y>12 ? 12:Eye.y;
+		Eye.y = Eye.y<-12 ? -12:Eye.y;
 
 		// OpenGL Draw commands
 		draw();
@@ -1057,6 +1062,7 @@ void createChar ()
 	Cube.x = 0;
 	Cube.y = -1;
 	Cube.z = 0;
+	Cube.speed_mod = 1.0;
 	Cube.sprite = create3DObject(GL_TRIANGLES, 72, g_vertex_buffer_data, g_color_buffer_data, GL_FILL);
 
 	GLfloat shadow_vertex_buffer_data[] = {
