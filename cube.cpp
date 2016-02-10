@@ -209,6 +209,8 @@ void VertColl(float x, float z) {
 		if (Cube.x > Block->x-Block->size_x/2 && Cube.x<Block->x+Block->size_x/2) // X collision
 			if (Cube.z > Block->z-Block->size_z/2 && Cube.z < Block->z+Block->size_z/2) // Z collision
 				if (Block->type != DEAD) {
+					if (Cube.vel[1] < -0.1)
+						createChar();
 					Cube.vel[1] = Cube.vel[1]>0 ? Cube.vel[1]:0;
 					Cube.y +=  (Block->y+Block->size_y/2) - (Cube.y-Cube.size_y/2);
 					if (Block->type == CRUMBLING) {
@@ -776,14 +778,14 @@ void set_cam()
 {
 	switch(Eye.camera_type) {
 	case ADVENTURE:
-		Eye.zoom = 0.6;
-		Eye.pan = Eye.zoom + 1.2;
+		Eye.zoom = 0.75;
+		Eye.pan = Eye.zoom + 0.25;
 		Eye.x = Cube.x;
 		Eye.y = Cube.y + 0.5;
 		Eye.z = Cube.z;
-		Eye.LookAt_x = Cube.x+1;
-		Eye.LookAt_y = Cube.y+0.5-0.04;
-		Eye.LookAt_z = Cube.z;
+		Eye.LookAt_x = Cube.x-sin(Cube.angle*M_PI/180.0f);
+		Eye.LookAt_y = Cube.y+0.5-0.2;
+		Eye.LookAt_z = Cube.z-cos(Cube.angle*M_PI/180.0f);
 		break;
 	case TOWER:
 		Eye.zoom = 4;
@@ -806,6 +808,14 @@ void set_cam()
 		Eye.LookAt_z = Cube.z;
 		break;
 	case FOLLOW:
+		Eye.zoom = 4;
+		Eye.x = Cube.x+3*sin(Cube.angle*M_PI/180.0f);
+		Eye.y = Cube.y+3;
+		Eye.z = Cube.z+3*cos(Cube.angle*M_PI/180.0f);
+		Eye.pan = Eye.zoom;
+		Eye.LookAt_x = Cube.x;
+		Eye.LookAt_y = Cube.y;
+		Eye.LookAt_z = Cube.z;
 		break;
 	case HELI:
 		Eye.x = Cube.x + 5*cos(Eye.angle*M_PI/180.0f);
