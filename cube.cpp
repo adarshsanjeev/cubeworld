@@ -55,6 +55,7 @@ public:
 class Character {
 public:
 	float x, y, z;
+	float angle;
 	glm::vec3 vel;
 	float size_x, size_y, size_z;
 	float scale;
@@ -378,7 +379,6 @@ bool moveCube(float x, float z)
 void keyboard (GLFWwindow* window, int key, int scancode, int action, int mods)
 {
 	// Function is called first on GLFW_PRESS.
-
 	if (action == GLFW_RELEASE) {
 	}
 	else if (action == GLFW_PRESS) {
@@ -413,6 +413,7 @@ void keyboard (GLFWwindow* window, int key, int scancode, int action, int mods)
 /* Executed for character input (like in text boxes) */
 void keyboardChar (GLFWwindow* window, unsigned int key)
 {
+	float movement, x_move, z_move;
 	switch (key) {
 	case 'Q':
 	case 'q':
@@ -433,20 +434,28 @@ void keyboardChar (GLFWwindow* window, unsigned int key)
 		Eye.pan-=0.5;
 		break;
 	case 'w':
-		if (moveCube(0, -0.1))
-			Cube.z -= 0.1 * Cube.speed_mod;
+		movement = -0.1 * Cube.speed_mod;
+		x_move = movement * sin(Cube.angle*M_PI/180.0f);
+		z_move = movement * cos(Cube.angle*M_PI/180.0f);
+		if (moveCube(x_move, 0))
+			Cube.x += x_move;
+		if (moveCube(z_move, 0))
+			Cube.z += z_move;
 		break;
 	case 's':
-		if (moveCube(0, 0.1))
-			Cube.z += 0.1 * Cube.speed_mod;
+		movement = 0.1 * Cube.speed_mod;
+		x_move = movement * sin(Cube.angle*M_PI/180.0f);
+		z_move = movement * cos(Cube.angle*M_PI/180.0f);
+		if (moveCube(x_move, 0))
+			Cube.x += x_move;
+		if (moveCube(z_move, 0))
+			Cube.z += z_move;
 		break;
 	case 'a':
-		if (moveCube(-0.1, 0))
-			Cube.x -= 0.1 * Cube.speed_mod;
+		Cube.angle += 5;
 		break;
 	case 'd':
-		if (moveCube(0.1, 0))
-			Cube.x += 0.1 * Cube.speed_mod;
+		Cube.angle -= 5;
 		break;
 
 	case '1':
@@ -631,12 +640,14 @@ void draw ()
 }
 	if (moveShadow()) {
 		MVP = VP * glm::translate (glm::vec3(Shadow.x, Shadow.y, Shadow.z)) * glm::scale(glm::vec3(Shadow.scale, 1.0f, Shadow.scale));
+		if (Eye.camera_type != ADVENTURE)
+			MVP = MVP * glm::rotate((float)(Cube.angle*M_PI/180.0f), glm::vec3(0,1,0));
 		glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
 		draw3DObject(Shadow.sprite);
 	}
 
 	if (Eye.camera_type != ADVENTURE) {
-		MVP = VP * glm::translate (glm::vec3(Cube.x, Cube.y, Cube.z));
+		MVP = VP * glm::translate (glm::vec3(Cube.x, Cube.y, Cube.z)) * glm::rotate((float)(Cube.angle*M_PI/180.0f), glm::vec3(0,1,0));
 		glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
 		draw3DObject(Cube.sprite);
 	}
@@ -1085,6 +1096,7 @@ void createChar ()
 	Shadow.size_x = 0.25;
 	Shadow.size_y = 0.25;
 	Shadow.size_z = 0.1;
+	Shadow.angle = 0;
 	Shadow.scale = 1.0f;
 	Shadow.x = Cube.x;
 	Shadow.y = -2;
