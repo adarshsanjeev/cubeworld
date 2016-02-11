@@ -19,6 +19,7 @@ using namespace std;
 enum camera_type {ADVENTURE, FOLLOW, TOWER, TOP, HELI};
 enum block_type {STABLE, DEAD, CRUMBLING, HOVERING, PLATFORM};
 enum compass {UP=0, DOWN=1, LEFT=2, RIGHT=3};
+enum player_state {NORMAL, FALLING};
 
 void createChar();
 
@@ -60,6 +61,7 @@ public:
 	float size_x, size_y, size_z;
 	float scale;
 	float speed_mod;
+	player_state state;
 	VAO *sprite;
 
 	void checkDie() {
@@ -209,16 +211,21 @@ void VertColl(float x, float z) {
 		if (Cube.x > Block->x-Block->size_x/2 && Cube.x<Block->x+Block->size_x/2) // X collision
 			if (Cube.z > Block->z-Block->size_z/2 && Cube.z < Block->z+Block->size_z/2) // Z collision
 				if (Block->type != DEAD) {
-					if (Cube.vel[1] < -0.1)
+					Cube.state = NORMAL;
+					if (Cube.vel[1] < -0.12)
 						createChar();
 					Cube.vel[1] = Cube.vel[1]>0 ? Cube.vel[1]:0;
 					Cube.y +=  (Block->y+Block->size_y/2) - (Cube.y-Cube.size_y/2);
 					if (Block->type == CRUMBLING) {
-						if (Block->y > -7)
-							Block->y -= 0.1;
+						if (Block->y > -7) {
+							Block->y -= 0.01;
+							Cube.y -= 0.01;
+						}
 						else
-							Block->y += 110;
-				}
+							Block->type = DEAD;
+					}
+					if (Block->type == HOVERING && Block->direction == -1)
+						Cube.y -= 0.01;
 			}
 }
 
@@ -392,7 +399,10 @@ void keyboard (GLFWwindow* window, int key, int scancode, int action, int mods)
 			quit(window);
 			break;
 		case GLFW_KEY_SPACE:
-			Cube.vel += glm::vec3 (0, 0.08, 0);
+			if (Cube.state == NORMAL) {
+				Cube.vel += glm::vec3 (0, 0.06, 0);
+				Cube.state = FALLING;
+			}
 			break;
 		}
 	}
@@ -814,7 +824,7 @@ void set_cam()
 		Eye.LookAt_z = Cube.z;
 		break;
 	case FOLLOW:
-		Eye.zoom = 4;
+		Eye.zoom = 2;
 		Eye.x = Cube.x+3*sin(Cube.angle*M_PI/180.0f);
 		Eye.y = Cube.y+3;
 		Eye.z = Cube.z+3*cos(Cube.angle*M_PI/180.0f);
@@ -1090,6 +1100,7 @@ void createChar ()
 	Cube.y = -1;
 	Cube.z = 0;
 	Cube.speed_mod = 1.0;
+	Cube.state = NORMAL;
 	Cube.sprite = create3DObject(GL_TRIANGLES, 72, g_vertex_buffer_data, g_color_buffer_data, GL_FILL);
 
 	GLfloat shadow_vertex_buffer_data[] = {
@@ -1108,7 +1119,6 @@ void createChar ()
 		0.25f, 0.25f, 0.25f,
 		0.25f, 0.25f, 0.25f,
 	};
-
 	Shadow.size_x = 0.25;
 	Shadow.size_y = 0.25;
 	Shadow.size_z = 0.1;
