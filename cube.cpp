@@ -235,6 +235,9 @@ bool moveShadow() {
 	if (Block->type == DEAD)
 		return false;
 
+	if (Cube.y < Block->y)
+		return false;
+
 	Shadow.x = Cube.x;
 	Shadow.y = Block->y + Block->size_y/2+0.01;
 	Shadow.z = Cube.z;
@@ -306,8 +309,8 @@ bool moveCube(float x, float z)
 	int floor_i = floor_pair.first;
 	int floor_j = floor_pair.second;
 
-	if(x>0) {
-		if(floor_i == -1 || floor_i == 19)
+	if (x>0) {
+		if (floor_i == -1 || floor_i == 19)
 			return true;
 
 		Wall* NextCube = &Floor[floor_i+1][floor_j];
@@ -324,8 +327,8 @@ bool moveCube(float x, float z)
 			return true;
 	}
 
-	else if(x<0) {
-		if(floor_i == -1 || floor_i == 0)
+	else if (x<0) {
+		if (floor_i == -1 || floor_i == 0)
 			return true;
 
 		Wall* NextCube = &Floor[floor_i-1][floor_j];
@@ -435,22 +438,29 @@ void keyboardChar (GLFWwindow* window, unsigned int key)
 	case 'l':
 		Eye.pan-=0.5;
 		break;
-	case 'w':
-		movement = -0.1 * Cube.speed_mod;
-		x_move = movement * sin(Cube.angle*M_PI/180.0f);
-		z_move = movement * cos(Cube.angle*M_PI/180.0f);
-		if (moveCube(x_move, 0))
-			Cube.x += x_move;
-		if (moveCube(z_move, 0))
-			Cube.z += z_move;
+	case 'f':
+		Cube.speed_mod = Cube.speed_mod < 1.5 ? Cube.speed_mod+0.1:Cube.speed_mod;
+		Cube.speed_mod += 0.1;
+		break;
+	case 'g':
+		Cube.speed_mod = Cube.speed_mod > 0.5 ? Cube.speed_mod-0.1:Cube.speed_mod;
 		break;
 	case 's':
-		movement = 0.1 * Cube.speed_mod;
-		x_move = movement * sin(Cube.angle*M_PI/180.0f);
-		z_move = movement * cos(Cube.angle*M_PI/180.0f);
+		movement = -0.1 * Cube.speed_mod;
+		x_move = -1 * movement * sin(Cube.angle*M_PI/180.0f);
+		z_move = -1 * movement * cos(Cube.angle*M_PI/180.0f);
 		if (moveCube(x_move, 0))
 			Cube.x += x_move;
-		if (moveCube(z_move, 0))
+		if (moveCube(0, z_move))
+			Cube.z += z_move;
+		break;
+	case 'w':
+		movement = 0.1 * Cube.speed_mod;
+		x_move = -1 * movement * sin(Cube.angle*M_PI/180.0f);
+		z_move = -1 * movement * cos(Cube.angle*M_PI/180.0f);
+		if (moveCube(x_move, 0))
+			Cube.x += x_move;
+		if (moveCube(0, z_move))
 			Cube.z += z_move;
 		break;
 	case 'a':
