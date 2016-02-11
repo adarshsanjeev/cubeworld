@@ -11,7 +11,7 @@
 #include <glm/gtx/transform.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include "cube.h"
-#define FLOOR_LENGTH 20
+#define FLOOR_LENGTH 10
 #define	GRAV_CONST 0.009;
 
 using namespace std;
@@ -180,7 +180,7 @@ public:
 pair<int, int> getFloorSquare(float x, float z)
 {
 	z*=-1;
-	if (x<-1.5 || x>39.5 || z<-1.5 || z>39.5)
+	if (x<-1.5 || x>FLOOR_LENGTH*2-0.5 || z<-1.5 || z>FLOOR_LENGTH*2-0.5)
 		return make_pair(-1, -1);
 	else
 		return make_pair((int)(x+1)/2, (int)(z+1)/2);
@@ -189,7 +189,7 @@ pair<int, int> getFloorSquare(float x, float z)
 Wall* getFloorPointer(float x, float z)
 {
 	z*=-1;
-	if (x<-1.5 || x>39.5 || z<-1.5 || z>39.5)
+	if (x<-1.5 || x>FLOOR_LENGTH*2-0.5 || z<-1.5 || z>FLOOR_LENGTH*2-0.5)
 		return NULL;
 	else
 		return &Floor[(int)(x+1)/2][(int)(z+1)/2];
@@ -310,7 +310,7 @@ bool moveCube(float x, float z)
 	int floor_j = floor_pair.second;
 
 	if (x>0) {
-		if (floor_i == -1 || floor_i == 19)
+		if (floor_i == -1 || floor_i == FLOOR_LENGTH-1)
 			return true;
 
 		Wall* NextCube = &Floor[floor_i+1][floor_j];
@@ -345,7 +345,7 @@ bool moveCube(float x, float z)
 	}
 
 	else if(z<0) {
-		if(floor_j == -1 || floor_j == 19)
+		if(floor_j == -1 || floor_j == FLOOR_LENGTH-1)
 			return true;
 		Wall* NextCube = &Floor[floor_i][floor_j+1];
 		if (NextCube->type == DEAD)
@@ -537,7 +537,7 @@ void applyFlEff ()
 {
 	for(int i=0; i<FLOOR_LENGTH; i++)
 		for(int j=0; j<FLOOR_LENGTH; j++) {
-			if((i==0 && j==0) || (i==19&&j==19))
+			if((i==0 && j==0) || (i==FLOOR_LENGTH-1&&j==FLOOR_LENGTH-1))
 				continue;
 			// Dead blocks
 			if(rand()%2) {
@@ -546,7 +546,7 @@ void applyFlEff ()
 			}
 
 			// // Platforms floors
-			// if(i!=0 && i!= 19 && j!=0 && j!=19 && rand()%2) {
+			// if(i!=0 && i!= FLOOR_LENGTH-1 && j!=0 && j!=FLOOR_LENGTH-1 && rand()%2) {
 			// 	Floor[i][j].type = PLATFORM;
 			// 	Floor[i][j].direction = rand()%4;
 			// 	for(int k=0; k<36*3; k++)
@@ -599,10 +599,6 @@ void createFloor ()
 
 }
 
-float camera_rotation_angle = 90;
-float rectangle_rotation = 0;
-float triangle_rotation = 0;
-
 /* Render the scene with openGL */
 /* Edit this function according to your assignment */
 void draw ()
@@ -615,11 +611,11 @@ void draw ()
 	glUseProgram (programID);
 
 	// Eye - Location of camera. Don't change unless you are sure!!
-	glm::vec3 eye ( 5*cos(camera_rotation_angle*M_PI/180.0f), 0, 5*sin(camera_rotation_angle*M_PI/180.0f) );
+	// glm::vec3 eye ( 5*cos(camera_rotation_angle*M_PI/180.0f), 0, 5*sin(camera_rotation_angle*M_PI/180.0f) );
 	// Target - Where is the camera looking at.  Don't change unless you are sure!!
-	glm::vec3 target (0, 0, 0);
+	// glm::vec3 target (0, 0, 0);
 	// Up - Up vector defines tilt of camera.  Don't change unless you are sure!!
-	glm::vec3 up (0, 1, 0);
+	// glm::vec3 up (0, 1, 0);
 
 	// Compute Eye matrix (view)
 	// Matrices.view = glm::lookAt( eye, target, up ); // Rotating Eye for 3D
@@ -788,13 +784,13 @@ void set_cam()
 {
 	switch(Eye.camera_type) {
 	case ADVENTURE:
-		Eye.zoom = 0.75;
+		Eye.zoom = 0.7;
 		Eye.pan = Eye.zoom + 0.25;
 		Eye.x = Cube.x;
-		Eye.y = Cube.y + 0.5;
+		Eye.y = Cube.y;
 		Eye.z = Cube.z;
 		Eye.LookAt_x = Cube.x-sin(Cube.angle*M_PI/180.0f);
-		Eye.LookAt_y = Cube.y+0.5-0.2;
+		Eye.LookAt_y = Cube.y-0.1;
 		Eye.LookAt_z = Cube.z-cos(Cube.angle*M_PI/180.0f);
 		break;
 	case TOWER:
