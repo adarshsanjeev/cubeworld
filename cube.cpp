@@ -249,6 +249,9 @@ bool moveShadow() {
 	Shadow.y = Block->y + Block->size_y/2+0.01;
 	Shadow.z = Cube.z;
 	Shadow.scale = 1/(0.6+Cube.y - Shadow.y);
+	Shadow.scale = Shadow.scale<0.65? Shadow.scale:0.65;
+	if (Cube.y < Shadow.y)
+		return false;
 	return true;
 }
 
@@ -550,7 +553,7 @@ void applyFlEff ()
 			if((i==0 && j==0) || (i==FLOOR_LENGTH-1&&j==FLOOR_LENGTH-1))
 				continue;
 			// Dead blocks
-			if(rand()%2) {
+			if(rand()%3) {
 				Floor[i][j].type = DEAD;
 				continue;
 			}
@@ -566,7 +569,7 @@ void applyFlEff ()
 			// }
 
 			// Crumbling floors
-			if(rand()%2) {
+			if(rand()%3) {
 				Floor[i][j].type = CRUMBLING;
 				for(int k=0; k<36*3; k++)
 						Floor[i][j].g_color_buffer_data[k] /= 1.7;
@@ -574,7 +577,7 @@ void applyFlEff ()
 			}
 
 			// Hovering floors
-			if(rand()%2) {
+			if(rand()%3) {
 				Floor[i][j].type = HOVERING;
 				Floor[i][j].y = (rand()%3)*2-6;
 				Floor[i][j].direction = -1;
@@ -658,14 +661,14 @@ void draw ()
 }
 	if (moveShadow()) {
 		MVP = VP * glm::translate (glm::vec3(Shadow.x, Shadow.y, Shadow.z)) * glm::scale(glm::vec3(Shadow.scale, 1.0f, Shadow.scale));
-		if (Eye.camera_type != ADVENTURE)
-			MVP = MVP * glm::rotate((float)(Cube.angle*M_PI/180.0f), glm::vec3(0,1,0));
+		// if (Eye.camera_type != ADVENTURE)
+		MVP = MVP * glm::rotate((float)(Cube.angle*M_PI/180.0f), glm::vec3(0,1,0));
 		glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
 		draw3DObject(Shadow.sprite);
 	}
 
 	if (Eye.camera_type != ADVENTURE) {
-		MVP = VP * glm::translate (glm::vec3(Cube.x, Cube.y, Cube.z)) * glm::rotate((float)(Cube.angle*M_PI/180.0f), glm::vec3(0,1,0));
+	    MVP = VP * glm::translate (glm::vec3(Cube.x, Cube.y, Cube.z)) * glm::rotate((float)(Cube.angle*M_PI/180.0f), glm::vec3(0,1,0));
 		glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
 		draw3DObject(Cube.sprite);
 	}
@@ -977,6 +980,44 @@ void createChar ()
 		0.3f, 0.3f, 0.3f,
 		-0.3f, 0.3f, 0.3f,
 		0.3f,-0.3f, 0.3f,
+
+		// Head
+		-0.15f, 0.35f,-0.15f,
+		-0.15f, 0.35f, 0.15f,
+		-0.15f, 0.65f, 0.15f,
+		-0.15f, 0.35f,-0.15f,
+		-0.15f, 0.65f, 0.15f,
+		-0.15f, 0.65f,-0.15f,
+		 0.15f, 0.65f,-0.15f,
+		-0.15f, 0.35f,-0.15f,
+		-0.15f, 0.65f,-0.15f,
+		 0.15f, 0.35f, 0.15f,
+		-0.15f, 0.35f,-0.15f,
+		 0.15f, 0.35f,-0.15f,
+		 0.15f, 0.65f,-0.15f,
+		 0.15f, 0.35f,-0.15f,
+		-0.15f, 0.35f,-0.15f,
+		 0.15f, 0.35f, 0.15f,
+		-0.15f, 0.65f, 0.15f,
+		-0.15f, 0.35f,-0.15f,
+		-0.15f, 0.65f, 0.15f,
+		-0.15f, 0.35f, 0.15f,
+		 0.15f, 0.35f, 0.15f,
+		 0.15f, 0.65f, 0.15f,
+		 0.15f, 0.35f,-0.15f,
+		 0.15f, 0.65f,-0.15f,
+		 0.15f, 0.35f,-0.15f,
+		 0.15f, 0.65f, 0.15f,
+		 0.15f, 0.35f, 0.15f,
+		 0.15f, 0.65f, 0.15f,
+		 0.15f, 0.65f,-0.15f,
+		-0.15f, 0.65f,-0.15f,
+		 0.15f, 0.65f, 0.15f,
+		-0.15f, 0.65f,-0.15f,
+		-0.15f, 0.65f, 0.15f,
+		 0.15f, 0.65f, 0.15f,
+		-0.15f, 0.65f, 0.15f,
+		 0.15f, 0.35f, 0.15f,
 	};
 
 	GLfloat g_color_buffer_data[] = {
@@ -1101,7 +1142,7 @@ void createChar ()
 	Cube.z = 0;
 	Cube.speed_mod = 1.0;
 	Cube.state = NORMAL;
-	Cube.sprite = create3DObject(GL_TRIANGLES, 72, g_vertex_buffer_data, g_color_buffer_data, GL_FILL);
+	Cube.sprite = create3DObject(GL_TRIANGLES, 108, g_vertex_buffer_data, g_color_buffer_data, GL_FILL);
 
 	GLfloat shadow_vertex_buffer_data[] = {
 		0.5f, 0.0f,-0.5f,
