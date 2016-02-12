@@ -57,6 +57,7 @@ class Character {
 public:
 	float x, y, z;
 	float angle;
+    glm::vec3 tilt;
 	glm::vec3 vel;
 	float size_x, size_y, size_z;
 	float scale;
@@ -65,7 +66,7 @@ public:
 	VAO *sprite;
 
 	void checkDie() {
-		if (y<-10)
+		if (y<-20)
 			createChar();
 	}
 } Cube, Shadow;
@@ -202,8 +203,11 @@ void VertColl(float x, float z) {
 	int floor_i = floor_pair.first;
 	int floor_j = floor_pair.second;
 
-	if(floor_i == -1 || floor_j == -1)
-		return;
+	if (floor_i == -1 || floor_j == -1) {
+	    if (Cube.y <= -0.5)
+	  	  Cube.tilt[0] += 5;
+	    return;
+	}
 
 	Wall* Block = &Floor[floor_i][floor_j];
 	if ( (Cube.y-Cube.size_y/2) <= (Block->y+Block->size_y/2) &&
@@ -227,6 +231,9 @@ void VertColl(float x, float z) {
 					if (Block->type == HOVERING && Block->direction == -1)
 						Cube.y -= 0.01;
 			}
+
+	if (Cube.y <= Block->y-0.5)
+	  Cube.tilt[0] += 10;
 }
 
 bool moveShadow() {
@@ -426,7 +433,6 @@ void keyboard (GLFWwindow* window, int key, int scancode, int action, int mods)
 		}
 	}
 }
-
 
 /* Executed for character input (like in text boxes) */
 void keyboardChar (GLFWwindow* window, unsigned int key)
@@ -657,8 +663,8 @@ void draw ()
 			glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
 			if (Floor[i][j].type != DEAD)
 				draw3DObject(Floor[i][j].sprite);
-
 }
+
 	if (moveShadow()) {
 		MVP = VP * glm::translate (glm::vec3(Shadow.x, Shadow.y, Shadow.z)) * glm::scale(glm::vec3(Shadow.scale, 1.0f, Shadow.scale));
 		// if (Eye.camera_type != ADVENTURE)
@@ -669,6 +675,7 @@ void draw ()
 
 	if (Eye.camera_type != ADVENTURE) {
 	    MVP = VP * glm::translate (glm::vec3(Cube.x, Cube.y, Cube.z)) * glm::rotate((float)(Cube.angle*M_PI/180.0f), glm::vec3(0,1,0));
+	    MVP *= glm::rotate((float)(Cube.tilt[0]*M_PI/180.0f), glm::vec3(1,0,0)) * glm::rotate((float)(Cube.tilt[2]*M_PI/180.0f), glm::vec3(0,0,1));
 		glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
 		draw3DObject(Cube.sprite);
 	}
@@ -1142,6 +1149,7 @@ void createChar ()
 	Cube.z = 0;
 	Cube.speed_mod = 1.0;
 	Cube.state = NORMAL;
+	Cube.tilt = glm::vec3(0, 0, 0);
 	Cube.sprite = create3DObject(GL_TRIANGLES, 108, g_vertex_buffer_data, g_color_buffer_data, GL_FILL);
 
 	GLfloat shadow_vertex_buffer_data[] = {
@@ -1168,5 +1176,5 @@ void createChar ()
 	Shadow.x = Cube.x;
 	Shadow.y = -2;
 	Shadow.z = Cube.y;
-	Shadow.sprite = create3DObject(GL_TRIANGLES, 36, shadow_vertex_buffer_data, shadow_color_buffer_data, GL_FILL);
+	Shadow.sprite = create3DObject(GL_TRIANGLES, 6, shadow_vertex_buffer_data, shadow_color_buffer_data, GL_FILL);
 }
