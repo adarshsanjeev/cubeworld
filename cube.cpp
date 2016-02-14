@@ -545,11 +545,11 @@ void keyboardChar (GLFWwindow* window, unsigned int key)
 
 	case '1':
 		Eye.camera_type = TOWER;
-		Eye.zoom = 4;
+		Eye.zoom = 18;
 		break;
 	case '2':
 		Eye.camera_type = TOP;
-		Eye.zoom = 4;
+		Eye.zoom = 22;
 		break;
 	case '3':
 		Eye.camera_type = ADVENTURE;
@@ -772,8 +772,9 @@ void scrollFunc(GLFWwindow *window, double xpos, double ypos)
 	}
 	else {
 		Eye.zoom += 0.25;
-		Eye.zoom = min(6.5f, Eye.zoom);
+		Eye.zoom = min(30.0f, Eye.zoom);
 	}
+	cout<<Eye.zoom<<endl;
 }
 
 /* Initialise glfw window, I/O callbacks and the renderer to use */
@@ -879,22 +880,22 @@ void set_cam()
 		Eye.LookAt_z = Cube.z-cos(Cube.angle*M_PI/180.0f);
 		break;
 	case TOWER:
-		Eye.x = Cube.x;
-		Eye.y = Cube.y+3;
+		Eye.x = FLOOR_LENGTH*1-1;
+		Eye.y = 20;
+		Eye.z = 0;
+		Eye.LookAt_x = FLOOR_LENGTH-1;
+		Eye.LookAt_y = 0;
+		Eye.LookAt_z = FLOOR_LENGTH*-1;
 		Eye.pan = Eye.zoom;
-		Eye.z = Cube.z+3;
-		Eye.LookAt_x = Cube.x;
-		Eye.LookAt_y = Cube.y;
-		Eye.LookAt_z = Cube.z;
 		break;
 	case TOP:
-		Eye.x = Cube.x;
-		Eye.y = Cube.y+3;
+		Eye.x = FLOOR_LENGTH-1;
+		Eye.y = 10;
+		Eye.z = -FLOOR_LENGTH+1;
 		Eye.pan = Eye.zoom;
-		Eye.z = Cube.z+0.0001;
-		Eye.LookAt_x = Cube.x;
-		Eye.LookAt_y = Cube.y;
-		Eye.LookAt_z = Cube.z;
+		Eye.LookAt_x = FLOOR_LENGTH-1;
+		Eye.LookAt_y = 0;
+		Eye.LookAt_z = -FLOOR_LENGTH+1-0.01;
 		break;
 	case FOLLOW:
 		Eye.x = Cube.x+3*sin(Cube.angle*M_PI/180.0f);
