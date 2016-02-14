@@ -20,7 +20,8 @@ enum camera_type {ADVENTURE, FOLLOW, TOWER, TOP, HELI};
 enum block_type {STABLE, DEAD, CRUMBLING, HOVERING, STICKY};
 enum compass {UP=0, DOWN=1, LEFT=2, RIGHT=3};
 enum player_state {NORMAL, FALLING};
-int GAME_DIFFICULTY = 1;
+
+int GAME_DIFFICULTY = 5;
 
 void createChar();
 void createFloor();
@@ -105,7 +106,7 @@ public:
 	float angle, elev;
 	camera_type camera_type;
 	Camera () {
-		camera_type = HELI;
+		camera_type = FOLLOW;
 		x = 0;
 		y = 3;
 		z = 3;
@@ -199,44 +200,7 @@ public:
     -1.0f, 1.0f, 1.0f, //vertex 3
 	};
 
-	GLfloat g_color_buffer_data[36*3] = {
-		0.7f, 0.7f, 0.7f, // triangle 1 : begin
-		0.7f, 0.7f, 0.7f,
-		0.7f, 0.7f, 0.7f, // triangle 1 : end
-		0.7f, 0.7f, 0.7f, // triangle 1 : begin
-		0.7f, 0.7f, 0.7f,
-		0.7f, 0.7f, 0.7f, // triangle 1 : end
-		0.7f, 0.7f, 0.7f, // triangle 1 : begin
-		0.7f, 0.7f, 0.7f,
-		0.7f, 0.7f, 0.7f, // triangle 1 : end
-		0.7f, 0.7f, 0.7f, // triangle 1 : begin
-		0.7f, 0.7f, 0.7f,
-		0.7f, 0.7f, 0.7f, // triangle 1 : end
-		0.7f, 0.7f, 0.7f, // triangle 1 : begin
-		0.7f, 0.7f, 0.7f,
-		0.7f, 0.7f, 0.7f, // triangle 1 : end
-		0.7f, 0.7f, 0.7f, // triangle 1 : begin
-		0.7f, 0.7f, 0.7f,
-		0.7f, 0.7f, 0.7f, // triangle 1 : end
-		0.7f, 0.7f, 0.7f, // triangle 1 : begin
-		0.7f, 0.7f, 0.7f,
-		0.7f, 0.7f, 0.7f, // triangle 1 : end
-		0.7f, 0.7f, 0.7f, // triangle 1 : begin
-		0.7f, 0.7f, 0.7f,
-		0.7f, 0.7f, 0.7f, // triangle 1 : end
-		0.7f, 0.7f, 0.7f, // triangle 1 : begin
-		0.7f, 0.7f, 0.7f,
-		0.7f, 0.7f, 0.7f, // triangle 1 : end
-		0.7f, 0.7f, 0.7f, // triangle 1 : begin
-		0.7f, 0.7f, 0.7f,
-		0.7f, 0.7f, 0.7f, // triangle 1 : end
-		0.7f, 0.7f, 0.7f, // triangle 1 : begin
-		0.7f, 0.7f, 0.7f,
-		0.7f, 0.7f, 0.7f, // triangle 1 : end
-		0.7f, 0.7f, 0.7f, // triangle 1 : begin
-		0.7f, 0.7f, 0.7f,
-		0.7f, 0.7f, 0.7f, // triangle 1 : end
-	};
+	GLfloat g_color_buffer_data[36*3];
 
 	VAO *sprite;
 } Floor[FLOOR_LENGTH][FLOOR_LENGTH];
@@ -271,6 +235,7 @@ void resetGame() {
 void winGame() {
 	GAME_DIFFICULTY -= 1;
 	GAME_DIFFICULTY = max(GAME_DIFFICULTY, 1);
+	createFloor();
 	resetGame();
 }
 
@@ -304,13 +269,15 @@ void VertColl(float x, float z) {
 						else
 							Block->y += 100.00;
 					}
+					if (floor_i == FLOOR_LENGTH-1 && floor_j == FLOOR_LENGTH-1)
+						winGame();
 					if (Block->type == HOVERING && Block->direction == -1)
 						Cube.y -= 0.01;
 					if (Block->type == STICKY)
 						Cube.speed_mod = 0.5;
 					else
 						Cube.speed_mod = 1;
-			}
+				}
 
 	if (Cube.y <= Block->y-0.5)
 	  Cube.tilt[0] += 10;
@@ -512,19 +479,8 @@ void keyboardChar (GLFWwindow* window, unsigned int key)
 	case 'q':
 		quit(window);
 		break;
-	case 'i':
-		Eye.zoom += 0.5;
-		Eye.zoom = min(6.5f, Eye.zoom);
-		break;
 	case 'k':
-		Eye.zoom -= 0.5;
-		Eye.zoom = max(0.5f, Eye.zoom);
-		break;
-	case 'j':
-		Eye.pan+=0.5;
-		break;
-	case 'l':
-		Eye.pan-=0.5;
+		winGame();
 		break;
 	case 'f':
 		Cube.speed_mod = Cube.speed_mod < 1.5 ? Cube.speed_mod+0.1:Cube.speed_mod;
@@ -640,8 +596,14 @@ void applyFlEff ()
 {
 	for(int i=0; i<FLOOR_LENGTH; i++)
 		for(int j=0; j<FLOOR_LENGTH; j++) {
-			if((i==0 && j==0) || (i==FLOOR_LENGTH-1&&j==FLOOR_LENGTH-1))
+			if((i==0 && j==0) || (i==FLOOR_LENGTH-1&&j==FLOOR_LENGTH-1)) {
+				for(int k=0; k<36*3; k++)
+					if((k-2)%3 == 0)
+						Floor[i][j].g_color_buffer_data[k] = 0;
+					else
+						Floor[i][j].g_color_buffer_data[k] += 1;
 				continue;
+			}
 			if (rand()%GAME_DIFFICULTY &&rand()%GAME_DIFFICULTY&&rand()%GAME_DIFFICULTY)
 				continue;
 
@@ -696,6 +658,8 @@ void createFloor ()
 			Floor[i][j].z = -2*j;
 			Floor[i][j].type = STABLE;
 			Floor[i][j].y = -3;
+			for(int k=0; k<36*3; k++)
+				Floor[i][j].g_color_buffer_data[k] = 0.7;
 		}
 
 	applyFlEff();
