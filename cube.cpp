@@ -11,7 +11,7 @@
 #include <glm/gtx/transform.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include "cube.h"
-#define FLOOR_LENGTH 10
+#define FLOOR_LENGTH 20
 #define	GRAV_CONST 0.009;
 
 using namespace std;
@@ -20,7 +20,7 @@ enum camera_type {ADVENTURE, FOLLOW, TOWER, TOP, HELI};
 enum block_type {STABLE, DEAD, CRUMBLING, HOVERING, STICKY};
 enum compass {UP=0, DOWN=1, LEFT=2, RIGHT=3};
 enum player_state {NORMAL, FALLING};
-int GAME_DIFFICULTY = 3;
+int GAME_DIFFICULTY = 1;
 
 void createChar();
 void resetGame();
@@ -450,6 +450,8 @@ void keyboard (GLFWwindow* window, int key, int scancode, int action, int mods)
 			quit(window);
 			break;
 		case GLFW_KEY_SPACE:
+			if (Cube.tilt[0])
+				break;
 			Wall* point = getFloorPointer(Cube.x, Cube.z);
 			if (Cube.state == NORMAL) {
 				if (point && point->type == STICKY)
@@ -464,16 +466,16 @@ void keyboard (GLFWwindow* window, int key, int scancode, int action, int mods)
 	else if (action == GLFW_REPEAT) {
 		switch (key) {
 		case GLFW_KEY_UP:
-			Eye.elev += 5;
+			Eye.elev += 10;
 			break;
 		case GLFW_KEY_DOWN:
-			Eye.elev -= 5;
+			Eye.elev -= 10;
 			break;
 		case GLFW_KEY_LEFT:
-			Eye.angle += 5;
+			Eye.angle -= 10;
 			break;
 		case GLFW_KEY_RIGHT:
-			Eye.angle -= 5;
+			Eye.angle += 10;
 			break;
 		}
 	}
@@ -510,6 +512,8 @@ void keyboardChar (GLFWwindow* window, unsigned int key)
 		Cube.speed_mod = Cube.speed_mod > 0.5 ? Cube.speed_mod-0.1:Cube.speed_mod;
 		break;
 	case 's':
+		if (Cube.tilt[0])
+			break;
 		movement = -0.1 * Cube.speed_mod;
 		x_move = -1 * movement * sin(Cube.angle*M_PI/180.0f);
 		z_move = -1 * movement * cos(Cube.angle*M_PI/180.0f);
@@ -519,6 +523,8 @@ void keyboardChar (GLFWwindow* window, unsigned int key)
 			Cube.z += z_move;
 		break;
 	case 'w':
+		if (Cube.tilt[0])
+			break;
 		movement = 0.1 * Cube.speed_mod;
 		x_move = -1 * movement * sin(Cube.angle*M_PI/180.0f);
 		z_move = -1 * movement * cos(Cube.angle*M_PI/180.0f);
@@ -539,19 +545,26 @@ void keyboardChar (GLFWwindow* window, unsigned int key)
 
 	case '1':
 		Eye.camera_type = TOWER;
+		Eye.zoom = 4;
 		break;
 	case '2':
 		Eye.camera_type = TOP;
+		Eye.zoom = 4;
 		break;
 	case '3':
 		Eye.camera_type = ADVENTURE;
+		Eye.zoom = 0.7;
 		break;
 	case '4':
 		Eye.camera_type = FOLLOW;
+		Eye.zoom = 2;
 		break;
 	case '5':
 		Eye.camera_type = HELI;
 		Eye.zoom = 4;
+		Eye.LookAt_x = Cube.x;
+		Eye.LookAt_y = Cube.y;
+		Eye.LookAt_z = Cube.z;
 		break;
 	}
 }
@@ -608,17 +621,10 @@ void applyFlEff ()
 				continue;
 			if (rand()%GAME_DIFFICULTY &&rand()%GAME_DIFFICULTY&&rand()%GAME_DIFFICULTY)
 				continue;
+
 			// Dead blocks
 			if(rand()%3) {
 				Floor[i][j].type = DEAD;
-				continue;
-			}
-
-			// Crumbling floors
-			if(rand()%4) {
-				Floor[i][j].type = CRUMBLING;
-				for(int k=0; k<36*3; k++)
-						Floor[i][j].g_color_buffer_data[k] /= 1.7;
 				continue;
 			}
 
@@ -644,6 +650,15 @@ void applyFlEff ()
 					continue;
 				}
 			}
+
+			// Crumbling floors
+			if(rand()%3) {
+				Floor[i][j].type = CRUMBLING;
+				for(int k=0; k<36*3; k++)
+					Floor[i][j].g_color_buffer_data[k] /= 3.7;
+				continue;
+			}
+
 		}
 }
 
@@ -864,7 +879,6 @@ void set_cam()
 		Eye.LookAt_z = Cube.z-cos(Cube.angle*M_PI/180.0f);
 		break;
 	case TOWER:
-		Eye.zoom = 4;
 		Eye.x = Cube.x;
 		Eye.y = Cube.y+3;
 		Eye.pan = Eye.zoom;
@@ -874,7 +888,6 @@ void set_cam()
 		Eye.LookAt_z = Cube.z;
 		break;
 	case TOP:
-		Eye.zoom = 4;
 		Eye.x = Cube.x;
 		Eye.y = Cube.y+3;
 		Eye.pan = Eye.zoom;
@@ -884,7 +897,6 @@ void set_cam()
 		Eye.LookAt_z = Cube.z;
 		break;
 	case FOLLOW:
-		Eye.zoom = 2;
 		Eye.x = Cube.x+3*sin(Cube.angle*M_PI/180.0f);
 		Eye.y = Cube.y+3;
 		Eye.z = Cube.z+3*cos(Cube.angle*M_PI/180.0f);
@@ -897,12 +909,12 @@ void set_cam()
 		Eye.x = Cube.x + 5*cos(Eye.angle*M_PI/180.0f);
 		Eye.z = Cube.z + 5*sin(Eye.angle*M_PI/180.0f);
 		Eye.pan = Eye.zoom;
-		Eye.LookAt_x = Cube.x;
-		Eye.LookAt_z = Cube.z;
-
 		Eye.elev = Eye.elev>80? 80:Eye.elev;
 		Eye.elev = Eye.elev<-80? -80:Eye.elev;
 		Eye.y = Cube.y + 5*sin(Eye.elev*M_PI/180.0f);
+		Eye.LookAt_x = Cube.x;
+		Eye.LookAt_y = Cube.y;
+		Eye.LookAt_z = Cube.z;
 		break;
 	}
 }
@@ -912,7 +924,7 @@ void mouse_drag()
 	int x_dist = Mouse.x - Mouse.held_x;
 	int y_dist = Mouse.y - Mouse.held_y;
 	Eye.angle = Mouse.angle + x_dist/2;
-	Eye.elev += y_dist/10;
+	Eye.elev = y_dist/10;
 	Eye.x = Cube.x + 5*cos(Eye.angle*M_PI/180.0f);
 	Eye.z = Cube.z + 5*sin(Eye.angle*M_PI/180.0f);
 }
