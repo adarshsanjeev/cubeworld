@@ -42,7 +42,7 @@ public:
 	int health;
 	float LookAt_x, LookAt_y, LookAt_z;
 	float zoom, pan;
-	float angle;
+	float angle, elev;
 	camera_type camera_type;
 	Camera () {
 		camera_type = HELI;
@@ -50,6 +50,7 @@ public:
 		y = 3;
 		z = 3;
 		angle = 90;
+		elev = 10;
 		LookAt_x = 0;
 		LookAt_y = -2.5;
 		LookAt_z = 0;
@@ -408,10 +409,10 @@ void keyboard (GLFWwindow* window, int key, int scancode, int action, int mods)
 	else if (action == GLFW_REPEAT) {
 		switch (key) {
 		case GLFW_KEY_UP:
-			Eye.y += 0.5;
+			Eye.elev += 5;
 			break;
 		case GLFW_KEY_DOWN:
-			Eye.y -= 0.5;
+			Eye.elev -= 5;
 			break;
 		case GLFW_KEY_LEFT:
 			Eye.angle += 5;
@@ -843,6 +844,10 @@ void set_cam()
 		Eye.pan = Eye.zoom;
 		Eye.LookAt_x = Cube.x;
 		Eye.LookAt_z = Cube.z;
+
+		Eye.elev = Eye.elev>80? 80:Eye.elev;
+		Eye.elev = Eye.elev<-80? -80:Eye.elev;
+		Eye.y = Cube.y + 5*sin(Eye.elev*M_PI/180.0f);
 		break;
 	}
 }
@@ -852,7 +857,7 @@ void mouse_drag()
 	int x_dist = Mouse.x - Mouse.held_x;
 	int y_dist = Mouse.y - Mouse.held_y;
 	Eye.angle = Mouse.angle + x_dist/2;
-	Eye.y += y_dist/100;
+	Eye.elev += y_dist/10;
 	Eye.x = Cube.x + 5*cos(Eye.angle*M_PI/180.0f);
 	Eye.z = Cube.z + 5*sin(Eye.angle*M_PI/180.0f);
 }
@@ -881,11 +886,10 @@ int main (int argc, char** argv)
 
 		gravity();
 
-		set_cam();
 		if (Mouse.MOUSE_HELD)
 			mouse_drag();
-		Eye.y = Eye.y>12 ? 12:Eye.y;
-		Eye.y = Eye.y<-12 ? -12:Eye.y;
+
+		set_cam();
 
 		// OpenGL Draw commands
 		draw();
