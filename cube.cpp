@@ -17,11 +17,14 @@
 using namespace std;
 
 enum camera_type {ADVENTURE, FOLLOW, TOWER, TOP, HELI};
-enum block_type {STABLE, DEAD, CRUMBLING, HOVERING, PLATFORM};
+enum block_type {STABLE, DEAD, CRUMBLING, HOVERING, STICKY};
 enum compass {UP=0, DOWN=1, LEFT=2, RIGHT=3};
 enum player_state {NORMAL, FALLING};
+int GAME_DIFFICULTY = 3;
 
 void createChar();
+void resetGame();
+void win_game();
 
 class mouseHold
 {
@@ -36,6 +39,7 @@ class Camera
 {
 public:
 	float x, y, z;
+	int health;
 	float LookAt_x, LookAt_y, LookAt_z;
 	float zoom, pan;
 	float angle;
@@ -66,8 +70,8 @@ public:
 	VAO *sprite;
 
 	void checkDie() {
-		if (y<-20)
-			createChar();
+		if (y<-10)
+			resetGame();
 	}
 } Cube, Shadow;
 
@@ -198,6 +202,21 @@ Wall* getFloorPointer(float x, float z)
 		return &Floor[(int)(x+1)/2][(int)(z+1)/2];
 }
 
+void resetGame() {
+	for(int i=0; i<FLOOR_LENGTH; i++)
+		for(int j=0; j<FLOOR_LENGTH; j++)
+			if (Floor[i][j].type == CRUMBLING) {
+				Floor[i][j].y = -3;
+		}
+	createChar();
+}
+
+void winGame() {
+	GAME_DIFFICULTY -= 1;
+	GAME_DIFFICULTY = max(GAME_DIFFICULTY, 1);
+	resetGame();
+}
+
 void VertColl(float x, float z) {
 	pair<int, int> floor_pair = getFloorSquare(x, z);
 	int floor_i = floor_pair.first;
@@ -217,7 +236,7 @@ void VertColl(float x, float z) {
 				if (Block->type != DEAD) {
 					Cube.state = NORMAL;
 					if (Cube.vel[1] < -0.12)
-						createChar();
+						resetGame();
 					Cube.vel[1] = Cube.vel[1]>0 ? Cube.vel[1]:0;
 					Cube.y +=  (Block->y+Block->size_y/2) - (Cube.y-Cube.size_y/2);
 					if (Block->type == CRUMBLING) {
@@ -226,10 +245,14 @@ void VertColl(float x, float z) {
 							Cube.y -= 0.01;
 						}
 						else
-							Block->type = DEAD;
+							Block->y += 100.00;
 					}
 					if (Block->type == HOVERING && Block->direction == -1)
 						Cube.y -= 0.01;
+					if (Block->type == STICKY)
+						Cube.speed_mod = 0.5;
+					else
+						Cube.speed_mod = 1;
 			}
 
 	if (Cube.y <= Block->y-0.5)
@@ -272,44 +295,6 @@ void gravity() {
 					Floor[i][j].direction *= -1;
 				Floor[i][j].y += 0.01 * Floor[i][j].direction;
 		}
-
-	// for(int i=0; i<FLOOR_LENGTH; i++)
-	// 	for(int j=0; j<FLOOR_LENGTH; j++)
-	// 		if (Floor[i][j].type == PLATFORM) {
-	// 			pair<int, int> floor_pair = getFloorSquare(Floor[i][j].x+0.99, Floor[i][j].z-0.99);
-	// 			int floor_i = floor_pair.first;
-	// 			int floor_j = floor_pair.second;
-	// 			switch(Floor[i][j].direction) {
-	// 			case UP:
-	// 				if ( Floor[floor_i][floor_j+1].type == DEAD ||
-	// 					 Floor[floor_i][floor_j+1].type == PLATFORM )
-	// 					Floor[i][j].z -= 0.01;
-	// 				else
-	// 					Floor[i][j].direction = rand()%4;
-	// 				break;
-	// 			case DOWN:
-	// 				if ( Floor[floor_i][floor_j-1].type == DEAD ||
-	// 					 Floor[floor_i][floor_j-1].type == PLATFORM )
-	// 					Floor[i][j].z += 0.01;
-	// 				else
-	// 					Floor[i][j].direction = rand()%4;
-	// 				break;
-	// 			case LEFT:
-	// 				if ( Floor[floor_i-1][floor_j].type == DEAD ||
-	// 					 Floor[floor_i-1][floor_j].type == PLATFORM )
-	// 					Floor[i][j].x -= 0.01;
-	// 				else
-	// 					Floor[i][j].direction = rand()%4;
-	// 				break;
-	// 			case RIGHT:
-	// 				if ( Floor[floor_i+1][floor_j].type == DEAD ||
-	// 					 Floor[floor_i+1][floor_j].type == PLATFORM )
-	// 					Floor[i][j].x += 0.01;
-	// 				else
-	// 					Floor[i][j].direction = rand()%4;
-	// 				break;
-	// 			}
-	// 	}
 
 	// Vertical collision
 	VertColl(Cube.x, Cube.z);
@@ -409,8 +394,12 @@ void keyboard (GLFWwindow* window, int key, int scancode, int action, int mods)
 			quit(window);
 			break;
 		case GLFW_KEY_SPACE:
+			Wall* point = getFloorPointer(Cube.x, Cube.z);
 			if (Cube.state == NORMAL) {
-				Cube.vel += glm::vec3 (0, 0.06, 0);
+				if (point && point->type == STICKY)
+					Cube.vel += glm::vec3 (0, 0.03, 0);
+				else
+					Cube.vel += glm::vec3 (0, 0.05, 0);
 				Cube.state = FALLING;
 			}
 			break;
@@ -488,6 +477,9 @@ void keyboardChar (GLFWwindow* window, unsigned int key)
 	case 'd':
 		Cube.angle -= 5;
 		break;
+	case 'r':
+		resetGame();
+		break;
 
 	case '1':
 		Eye.camera_type = TOWER;
@@ -558,42 +550,44 @@ void applyFlEff ()
 		for(int j=0; j<FLOOR_LENGTH; j++) {
 			if((i==0 && j==0) || (i==FLOOR_LENGTH-1&&j==FLOOR_LENGTH-1))
 				continue;
+			if (rand()%GAME_DIFFICULTY &&rand()%GAME_DIFFICULTY&&rand()%GAME_DIFFICULTY)
+				continue;
 			// Dead blocks
 			if(rand()%3) {
 				Floor[i][j].type = DEAD;
 				continue;
 			}
 
-			// // Platforms floors
-			// if(i!=0 && i!= FLOOR_LENGTH-1 && j!=0 && j!=FLOOR_LENGTH-1 && rand()%2) {
-			// 	Floor[i][j].type = PLATFORM;
-			// 	Floor[i][j].direction = rand()%4;
-			// 	for(int k=0; k<36*3; k++)
-			// 		if((k-1)%3)
-			// 			Floor[i][j].g_color_buffer_data[k] /= 1.7;
-			// 	continue;
-			// }
-
 			// Crumbling floors
-			if(rand()%3) {
+			if(rand()%4) {
 				Floor[i][j].type = CRUMBLING;
 				for(int k=0; k<36*3; k++)
 						Floor[i][j].g_color_buffer_data[k] /= 1.7;
 				continue;
 			}
 
-			// Hovering floors
-			if(rand()%3) {
-				Floor[i][j].type = HOVERING;
-				Floor[i][j].y = (rand()%3)*2-6;
-				Floor[i][j].direction = -1;
-				for(int k=0; k<36*3; k++) {
-					if(k%3)
-						Floor[i][j].g_color_buffer_data[k] = 0;
+			// Sticky floors
+			if (rand()%2) {
+				if (rand()%2)
+				{
+					Floor[i][j].type = STICKY;
+					for(int k=0; k<36*3; k++)
+						if((k-1)%3)
+							Floor[i][j].g_color_buffer_data[k] /= 1.7;
+					continue;
 				}
-				continue;
+				else {
+					// Hovering floors
+					Floor[i][j].type = HOVERING;
+					Floor[i][j].y = (rand()%3)*2-6;
+					Floor[i][j].direction = -1;
+					for(int k=0; k<36*3; k++) {
+						if(k%3)
+							Floor[i][j].g_color_buffer_data[k] = 0;
+					}
+					continue;
+				}
 			}
-
 		}
 }
 
