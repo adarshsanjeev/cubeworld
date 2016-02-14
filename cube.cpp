@@ -24,43 +24,63 @@ enum player_state {NORMAL, FALLING};
 void createChar();
 
 GLfloat g_normal_buffer_data[36*3] = {
-		1.0f, 0.5f, 0.5f, // triangle 1 : begin
-		1.0f, 0.5f, 0.5f,
-		1.0f, 0.5f, 0.5f, // triangle 1 : end
-		0.5f, 0.5f, 0.5f, // triangle 1 : begin
-		0.5f, 0.5f, 0.5f,
-		0.5f, 0.5f, 0.5f, // triangle 1 : end
-		0.5f, 0.5f, 0.5f, // triangle 1 : begin
-		0.5f, 0.5f, 0.5f,
-		0.5f, 0.5f, 0.5f, // triangle 1 : end
-		0.5f, 0.5f, 0.5f, // triangle 1 : begin
-		0.5f, 0.5f, 0.5f,
-		0.5f, 0.5f, 0.5f, // triangle 1 : end
-		0.5f, 0.5f, 0.5f, // triangle 1 : begin
-		0.5f, 0.5f, 0.5f,
-		0.5f, 0.5f, 0.5f, // triangle 1 : end
-		0.5f, 0.5f, 0.5f, // triangle 1 : begin
-		0.5f, 0.5f, 0.5f,
-		0.5f, 0.5f, 0.5f, // triangle 1 : end
-		0.5f, 0.5f, 0.5f, // triangle 1 : begin
-		0.5f, 0.5f, 0.5f,
-		0.5f, 0.5f, 0.5f, // triangle 1 : end
-		0.5f, 0.5f, 0.5f, // triangle 1 : begin
-		0.5f, 0.5f, 0.5f,
-		0.5f, 0.5f, 0.5f, // triangle 1 : end
-		0.5f, 0.5f, 0.5f, // triangle 1 : begin
-		0.5f, 0.5f, 0.5f,
-		0.5f, 0.5f, 0.5f, // triangle 1 : end
-		0.5f, 0.5f, 0.5f, // triangle 1 : begin
-		0.5f, 0.5f, 0.5f,
-		0.5f, 0.5f, 0.5f, // triangle 1 : end
-		0.5f, 0.5f, 0.5f, // triangle 1 : begin
-		0.5f, 0.5f, 0.5f,
-		0.5f, 0.5f, 0.5f, // triangle 1 : end
-		0.5f, 0.5f, 0.5f, // triangle 1 : begin
-		0.5f, 0.5f, 0.5f,
-		0.5f, 0.5f, 0.5f, // triangle 1 : end
-	};
+
+    // Left face
+    -1.0f,0.0f,0.0f, //-ve xaxis
+    -1.0f,0.0f,0.0f, //-ve xaxis
+    -1.0f,0.0f,0.0f, //-ve xaxis
+
+    -1.0f,0.0f,0.0f, //-ve xaxis
+    -1.0f,0.0f,0.0f, //-ve xaxis
+    -1.0f,0.0f,0.0f, //-ve xaxis
+
+
+    // Back face
+    0.0f,0.0f,-1.0f, // -ve zaxis
+    0.0f,0.0f,-1.0f, // -ve zaxis
+    0.0f,0.0f,-1.0f, // -ve zaxis
+
+    0.0f,0.0f,-1.0f, // -ve zaxis
+    0.0f,0.0f,-1.0f, // -ve zaxis
+    0.0f,0.0f,-1.0f, // -ve zaxis
+
+    // Bottom face
+    0.0f,-1.0f,0.0f, // -ve yaxis
+    0.0f,-1.0f,0.0f, // -ve yaxis
+    0.0f,-1.0f,0.0f, // -ve yaxis
+
+    0.0f,-1.0f,0.0f, // -ve yaxis
+    0.0f,-1.0f,0.0f, // -ve yaxis
+    0.0f,-1.0f,0.0f, // -ve yaxis
+
+    // Front face
+    0.0f,0.0f,1.0f, // +ve zaxis
+    0.0f,0.0f,1.0f, // +ve zaxis
+    0.0f,0.0f,1.0f, // +ve zaxis
+
+    0.0f,0.0f,1.0f, // +ve zaxis
+    0.0f,0.0f,1.0f, // +ve zaxis
+    0.0f,0.0f,1.0f, // +ve zaxis
+
+    // Right face
+    1.0f,0.0f,0.0f, // +ve xaxis
+    1.0f,0.0f,0.0f, // +ve xaxis
+    1.0f,0.0f,0.0f, // +ve xaxis
+
+    1.0f,0.0f,0.0f, // +ve xaxis
+    1.0f,0.0f,0.0f, // +ve xaxis
+    1.0f,0.0f,0.0f, // +ve xaxis
+
+
+    // Topface
+    0.0f,1.0f,0.0f, // +ve yaxis
+    0.0f,1.0f,0.0f, // +ve yaxis
+    0.0f,1.0f,0.0f, // +ve yaxis
+
+    0.0f,1.0f,0.0f, // +ve yaxis
+    0.0f,1.0f,0.0f, // +ve yaxis
+    0.0f,1.0f,0.0f, // +ve yaxis
+          	};
 
 class mouseHold
 {
@@ -118,54 +138,61 @@ public:
 	int direction;
 
 	GLfloat g_vertex_buffer_data[36*3]= {
-		-1.0f,-0.6f,-1.0f, // triangle 1 : begin
-		-1.0f,-0.6f, 1.0f,
-		-1.0f, 1.0f, 1.0f, // triangle 1 : end
+// Left face
+    -1.0f,-0.6f,-1.0f, //vertex 1
+    -1.0f,-0.6f, 1.0f, //vertex 2
+    -1.0f, 1.0f, 1.0f, //vertex 3
 
-		-1.0f,-0.6f,-1.0f,
-		-1.0f, 1.0f, 1.0f,
-		-1.0f, 1.0f,-1.0f,
+    -1.0f,-0.6f,-1.0f, //vertex 1
+    -1.0f, 1.0f, 1.0f, // vertex 3
+    -1.0f, 1.0f,-1.0f, // vertex 4
 
-		1.0f, 1.0f,-1.0f, // triangle 2 : begin
-		-1.0f,-0.6f,-1.0f,
-		-1.0f, 1.0f,-1.0f, // triangle 2 : end
+    //Back face
+    1.0f, 1.0f,-1.0f, //vertex 5
+    -1.0f,-0.6f,-1.0f, // vertex 1
+    -1.0f, 1.0f,-1.0f, // vertex 4
 
-		1.0f,-0.6f, 1.0f,
-		-1.0f,-0.6f,-1.0f,
-		1.0f,-0.6f,-1.0f,
+    1.0f, 1.0f,-1.0f, //vertex 5
+    1.0f,-0.6f,-1.0f, // vertex 7
+    -1.0f,-0.6f,-1.0f, //vertex 1
 
-		1.0f, 1.0f,-1.0f,
-		1.0f,-0.6f,-1.0f,
-		-1.0f,-0.6f,-1.0f,
+    //  Bottom face
+    1.0f,-0.6f, 1.0f, // vertex 6
+    -1.0f,-0.6f,-1.0f, // vertex 1
+    1.0f,-0.6f,-1.0f, // vertex 7
 
-		1.0f,-0.6f, 1.0f,
-		-1.0f,-0.6f, 1.0f,
-		-1.0f,-0.6f,-1.0f,
+    1.0f,-0.6f, 1.0f, //vertex 6
+    -1.0f,-0.6f, 1.0f, //vertex 2
+    -1.0f,-0.6f,-1.0f, //vertex 1
 
-		-1.0f, 1.0f, 1.0f,
-		-1.0f,-0.6f, 1.0f,
-		1.0f,-0.6f, 1.0f,
+    //  Front face
+    -1.0f, 1.0f, 1.0f, //vertex 3
+    -1.0f,-0.6f, 1.0f, //vertex 2
+    1.0f,-0.6f, 1.0f, //vertex 6
 
-		1.0f, 1.0f, 1.0f,
-		1.0f,-0.6f,-1.0f,
-		1.0f, 1.0f,-1.0f,
+    1.0f, 1.0f, 1.0f,  //vertex 8
+    -1.0f, 1.0f, 1.0f, //vertex 3
+    1.0f,-0.6f, 1.0f, //vertex 6
 
-		1.0f,-0.6f,-1.0f,
-		1.0f, 1.0f, 1.0f,
-		1.0f,-0.6f, 1.0f,
+    //  Right face
+    1.0f, 1.0f, 1.0f, //vertex 8
+    1.0f,-0.6f,-1.0f, //vertex 7
+    1.0f, 1.0f,-1.0f, //vertex 5
 
-		1.0f, 1.0f, 1.0f,
-		1.0f, 1.0f,-1.0f,
-		-1.0f, 1.0f,-1.0f,
+    1.0f,-0.6f,-1.0f, //vertex 7
+    1.0f, 1.0f, 1.0f, //vertex 8
+    1.0f,-0.6f, 1.0f, //vertex 6
 
-		1.0f, 1.0f, 1.0f,
-		-1.0f, 1.0f,-1.0f,
-		-1.0f, 1.0f, 1.0f,
+    //Topface
+    1.0f, 1.0f, 1.0f, //vertex 8
+    1.0f, 1.0f,-1.0f, //vertex 5
+    -1.0f, 1.0f,-1.0f, //vertex 4
 
-		1.0f, 1.0f, 1.0f,
-		-1.0f, 1.0f, 1.0f,
-		1.0f,-0.6f, 1.0f
+    1.0f, 1.0f, 1.0f, //vertex 8
+    -1.0f, 1.0f,-1.0f, //vertex 4
+    -1.0f, 1.0f, 1.0f, //vertex 3
 	};
+
 	GLfloat g_color_buffer_data[36*3] = {
 		0.7f, 0.7f, 0.7f, // triangle 1 : begin
 		0.7f, 0.7f, 0.7f,
