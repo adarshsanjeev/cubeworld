@@ -17,7 +17,7 @@ void main ()
     // The color of each vertex will be interpolated
     // to produce the color of each fragment
 	VNormal = vertexNormal;
-    fragColor = vertexColor;
+    fragColor = 0.5*vertexColor + 0.1*dot(vertexPosition, vec3(1, 1, -1));
     // Output position of the vertex, in clip space : MVP * position
     gl_Position = MVP * v;
 }
