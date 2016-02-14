@@ -23,6 +23,7 @@ enum player_state {NORMAL, FALLING};
 int GAME_DIFFICULTY = 1;
 
 void createChar();
+void createFloor();
 void resetGame();
 void win_game();
 
@@ -83,7 +84,7 @@ GLfloat g_normal_buffer_data[36*3] = {
     0.0f,1.0f,0.0f, // +ve yaxis
     0.0f,1.0f,0.0f, // +ve yaxis
     0.0f,1.0f,0.0f, // +ve yaxis
-          	};
+};
 
 class mouseHold
 {
@@ -464,18 +465,39 @@ void keyboard (GLFWwindow* window, int key, int scancode, int action, int mods)
 		}
 	}
 	else if (action == GLFW_REPEAT) {
+		float x_disp, z_disp;
 		switch (key) {
 		case GLFW_KEY_UP:
-			Eye.elev += 10;
+			x_disp = 0;
+			z_disp = -1;
+			Eye.x += x_disp;
+			Eye.z += z_disp;
+			Eye.LookAt_x += x_disp;
+			Eye.LookAt_z += z_disp;
 			break;
 		case GLFW_KEY_DOWN:
-			Eye.elev -= 10;
+			x_disp = 0;
+			z_disp = 1;
+			Eye.x += x_disp;
+			Eye.z += z_disp;
+			Eye.LookAt_x += x_disp;
+			Eye.LookAt_z += z_disp;
 			break;
 		case GLFW_KEY_LEFT:
-			Eye.angle -= 10;
+			x_disp = -1;
+			z_disp = 0;
+			Eye.x += x_disp;
+			Eye.z += z_disp;
+			Eye.LookAt_x += x_disp;
+			Eye.LookAt_z += z_disp;
 			break;
 		case GLFW_KEY_RIGHT:
-			Eye.angle += 10;
+			x_disp = 1;
+			z_disp = 0;
+			Eye.x += x_disp;
+			Eye.z += z_disp;
+			Eye.LookAt_x += x_disp;
+			Eye.LookAt_z += z_disp;
 			break;
 		}
 	}
@@ -540,6 +562,7 @@ void keyboardChar (GLFWwindow* window, unsigned int key)
 		Cube.angle -= 5;
 		break;
 	case 'r':
+		createFloor();
 		resetGame();
 		break;
 
@@ -561,10 +584,10 @@ void keyboardChar (GLFWwindow* window, unsigned int key)
 		break;
 	case '5':
 		Eye.camera_type = HELI;
-		Eye.zoom = 4;
-		Eye.LookAt_x = Cube.x;
-		Eye.LookAt_y = Cube.y;
-		Eye.LookAt_z = Cube.z;
+		Eye.zoom = 5;
+		Eye.x = Cube.x;
+		Eye.y = 10;
+		Eye.z = Cube.z;
 		break;
 	}
 }
@@ -907,15 +930,15 @@ void set_cam()
 		Eye.LookAt_z = Cube.z;
 		break;
 	case HELI:
-		Eye.x = Cube.x + 5*cos(Eye.angle*M_PI/180.0f);
-		Eye.z = Cube.z + 5*sin(Eye.angle*M_PI/180.0f);
+		// Eye.x = Cube.x + 5*cos(Eye.angle*M_PI/180.0f);
+		// Eye.z = Cube.z + 5*sin(Eye.angle*M_PI/180.0f);
 		Eye.pan = Eye.zoom;
 		Eye.elev = Eye.elev>80? 80:Eye.elev;
 		Eye.elev = Eye.elev<-80? -80:Eye.elev;
-		Eye.y = Cube.y + 5*sin(Eye.elev*M_PI/180.0f);
-		Eye.LookAt_x = Cube.x;
-		Eye.LookAt_y = Cube.y;
-		Eye.LookAt_z = Cube.z;
+		Eye.y = 10*sin(Eye.elev*M_PI/180.0f);
+		// Eye.LookAt_x = Cube.x;
+		// Eye.LookAt_y = Cube.y;
+		// Eye.LookAt_z = Cube.z;
 		break;
 	}
 }
@@ -925,9 +948,9 @@ void mouse_drag()
 	int x_dist = Mouse.x - Mouse.held_x;
 	int y_dist = Mouse.y - Mouse.held_y;
 	Eye.angle = Mouse.angle + x_dist/2;
-	Eye.elev = y_dist/10;
-	Eye.x = Cube.x + 5*cos(Eye.angle*M_PI/180.0f);
-	Eye.z = Cube.z + 5*sin(Eye.angle*M_PI/180.0f);
+	Eye.elev = y_dist;
+	Eye.x = Eye.LookAt_x + 50*cos(Eye.angle*M_PI/180.0f);
+	Eye.z = Eye.LookAt_x + 50*sin(Eye.angle*M_PI/180.0f);
 }
 
 int main (int argc, char** argv)
